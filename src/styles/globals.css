@@ -1,0 +1,639 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Marketing dark theme tokens ────────────────────────────────── */
+:root {
+  --bg-base:        #08070D;
+  --bg-surface:     #11101A;
+  --bg-elevated:    #1A1825;
+  --border-dark:    #2A2638;
+  --border-strong:  #3A3650;
+  --text-primary:   #F4F2FA;
+  --text-secondary: #A8A2BD;
+  --text-tertiary:  #6B6580;
+
+  /* Brand gradient — Aurora (locked) */
+  --grad-1: #8B5CF6;
+  --grad-2: #D946EF;
+  --grad-3: #06B6D4;
+  --gradient: linear-gradient(135deg, var(--grad-1) 0%, var(--grad-2) 50%, var(--grad-3) 100%);
+  --gradient-soft: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--grad-1) 30%, transparent) 0%,
+    color-mix(in oklab, var(--grad-2) 30%, transparent) 50%,
+    color-mix(in oklab, var(--grad-3) 30%, transparent) 100%
+  );
+
+  /* Status colors */
+  --status-open:     #A8A2BD;
+  --status-planned:  #06B6D4;
+  --status-progress: #D946EF;
+  --status-shipped:  #10B981;
+  --status-closed:   #6B6580;
+  --status-error:    #EF4444;
+  --status-warning:  #F59E0B;
+
+  /* Typography */
+  --font-display: 'Geist', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-body:    'Geist', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    'Geist', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Text on gradient surfaces */
+  --text-on-gradient: #F4F2FA;
+  --surface-hint: color-mix(in oklab, var(--text-on-gradient) 2%, transparent);
+
+  /* CTA sizing tokens */
+  --cta-sm-pad-v: 5px;
+  --cta-sm-pad-h: 10px;
+  --cta-sm-fs:    12px;
+  --cta-md-pad-v: 8px;
+  --cta-md-pad-h: 16px;
+  --cta-md-fs:    14px;
+  --cta-pad-v:  14px;
+  --cta-pad-h:  26px;
+  --cta-fs:     15px;
+  --cta-gap:    8px;
+  --cta-radius: 999px;
+
+  /* Radii */
+  --radius-container: 14px;
+
+  /* Section rhythm tokens */
+  --section-v:       96px;
+  --section-v-sm:    64px;
+  --section-hdr-gap: 48px;
+  --section-lbl-gap: 14px;
+
+  /* Animation duration scale */
+  --dur-micro:     100ms;
+  --dur-ui:        150ms;
+  --dur-fast:      200ms;
+  --dur-medium:    300ms;
+  --dur-base:      600ms;
+  --dur-slow:      900ms;
+  --dur-cinematic: 1200ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── App theme tokens — toggled via data-theme on <html> ─────── */
+[data-theme='dark'] {
+  --bg:      #08070D;
+  --surface: #11101A;
+  --elev:    #1A1825;
+  --border:  #2A2638;
+  --border-2: #3A3650;
+  --tx:      #F4F2FA;
+  --tx2:     #A8A2BD;
+  --tx3:     #6B6580;
+  --shadow:  0 12px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='light'] {
+  --bg:      #FAFAFC;
+  --surface: #FFFFFF;
+  --elev:    #FFFFFF;
+  --border:  #E5E3EE;
+  --border-2: #CFCBDE;
+  --tx:      #0F0E1A;
+  --tx2:     #5C5870;
+  --tx3:     #8C879F;
+  --shadow:  0 12px 40px -10px rgba(15, 14, 26, 0.08);
+}
+
+/* ── Theme transition — smooth color changes on toggle ───────────── */
+[data-theme] {
+  transition:
+    background-color var(--dur-fast) ease-out,
+    color var(--dur-fast) ease-out,
+    border-color var(--dur-fast) ease-out;
+}
+
+[data-theme] *,
+[data-theme] *::before,
+[data-theme] *::after {
+  transition:
+    background-color var(--dur-fast) ease-out,
+    color var(--dur-fast) ease-out,
+    border-color var(--dur-fast) ease-out,
+    fill var(--dur-fast) ease-out,
+    stroke var(--dur-fast) ease-out;
+}
+
+/* ── Base resets ────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background-color: var(--bg-base);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: var(--bg-base);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ── Landing page ambient background (fixed washes, dark only) ─ */
+.marketing-root {
+  background-color: var(--bg-base);
+  background-image:
+    radial-gradient(1200px 700px at 8% -8%,
+      color-mix(in oklab, var(--grad-1) 14%, transparent), transparent 62%),
+    radial-gradient(1000px 700px at 108% 106%,
+      color-mix(in oklab, var(--grad-2) 11%, transparent), transparent 62%),
+    radial-gradient(1000px 700px at 50% 50%,
+      color-mix(in oklab, var(--grad-3) 9%, transparent), transparent 65%),
+    radial-gradient(800px 600px at 20% 70%,
+      color-mix(in oklab, var(--grad-1) 7%, transparent), transparent 60%),
+    radial-gradient(700px 500px at 80% 30%,
+      color-mix(in oklab, var(--grad-3) 6%, transparent), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* ── Marketing dark page background ──────────────────────────── */
+.marketing-bg {
+  background:
+    radial-gradient(900px 600px at 8% -10%, color-mix(in oklab, var(--grad-1) 12%, transparent), transparent 60%),
+    radial-gradient(800px 600px at 110% 110%, color-mix(in oklab, var(--grad-2) 10%, transparent), transparent 60%),
+    var(--bg-base);
+  background-attachment: fixed;
+}
+
+/* Film grain overlay */
+.film-grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.035;
+  will-change: transform;
+  transform: translateZ(0);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.6'/></svg>");
+}
+
+/* ── Reusable gradient text ──────────────────────────────────── */
+.grad-text {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% 200%;
+}
+
+.grad-text-sweep {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% 200%;
+  animation: gradientSweep 8s ease-in-out infinite;
+}
+
+@keyframes gradientSweep {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+/* ── Glass card utility ───────────────────────────────────────── */
+.glass {
+  background: linear-gradient(180deg,
+    color-mix(in oklab, var(--bg-elevated) 65%, transparent),
+    color-mix(in oklab, var(--bg-surface) 55%, transparent));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid color-mix(in oklab, var(--text-on-gradient) 6%, transparent);
+  border-radius: 16px;
+}
+
+/* ── Gradient outline via mask-composite (1px gradient border) ─ */
+.gradient-border { position: relative; isolation: isolate; }
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--grad-1) 50%, transparent),
+    color-mix(in oklab, var(--grad-2) 45%, transparent),
+    color-mix(in oklab, var(--grad-3) 45%, transparent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+.gradient-border.glass { border-color: transparent; }
+
+/* ── Mono label utility ───────────────────────────────────────── */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── Gradient focus ring for inputs ──────────────────────────── */
+.input-focus:focus {
+  outline: none;
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--grad-1) 70%, transparent),
+    0 0 0 4px color-mix(in oklab, var(--grad-1) 20%, transparent);
+}
+
+/* ── Container ────────────────────────────────────────────────── */
+.container-marketing {
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+}
+
+/* ── MurmrInput placeholder color ────────────────────────────── */
+.murmr-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ── MurmrInput focus state ───────────────────────────────────── */
+.murmr-input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--grad-1);
+}
+
+/* ── Password toggle button ───────────────────────────────────── */
+.murmr-pw-toggle {
+  color: var(--text-tertiary);
+  transition: color var(--dur-ui);
+}
+.murmr-pw-toggle:hover { color: var(--text-secondary); }
+.murmr-pw-toggle:focus-visible {
+  outline: 2px solid var(--grad-1);
+  outline-offset: 2px;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* ── Selection ────────────────────────────────────────────────── */
+::selection {
+  background: color-mix(in oklab, var(--grad-2) 50%, transparent);
+  color: var(--text-primary);
+}
+
+/* ── Auth card glow — scale down on narrow viewports ─────────── */
+@media (max-width: 480px) {
+  .auth-card-glow {
+    transform: scale(1) !important;
+    opacity: 0.5 !important;
+  }
+}
+
+/* ── Orb rotation ────────────────────────────────────────────── */
+@keyframes orbSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Feature card hover glow ─────────────────────────────────── */
+.feature-card {
+  position: relative;
+  isolation: isolate;
+  transition:
+    transform var(--dur-medium) var(--ease-out-expo),
+    border-color var(--dur-medium) var(--ease-out-expo),
+    box-shadow var(--dur-medium) var(--ease-out-expo);
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: radial-gradient(
+    80% 80% at 50% 110%,
+    color-mix(in oklab, var(--grad-1) 22%, transparent) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--dur-medium) var(--ease-out-expo);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--border-strong) !important;
+  box-shadow: 0 16px 48px -12px rgba(139, 92, 246, 0.18);
+}
+
+.feature-card:hover::after {
+  opacity: 1;
+}
+
+/* ── Legacy gradient button (auth flows only — do not use on landing) */
+.gradient-btn {
+  transition: transform var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast);
+}
+.gradient-btn:hover:not(:disabled) { transform: translateY(-1px); }
+
+/* ── Legacy ghost button (kept for backwards compat) ─────────── */
+.ghost-btn {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-dark);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.ghost-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.ghost-btn:focus-visible { outline: 2px solid var(--grad-1); outline-offset: 3px; border-radius: inherit; }
+
+/* ── CTA design token system ─────────────────────────────────── */
+
+/* Shared base */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cta-gap);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: none;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) ease-out,
+    border-color var(--dur-fast) ease-out,
+    color var(--dur-fast) ease-out,
+    filter var(--dur-fast) ease-out,
+    transform var(--dur-micro) ease-out;
+}
+.cta:active { transform: scale(0.97); }
+.cta:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--grad-1);
+}
+.cta:disabled,
+.cta[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.cta svg { flex-shrink: 0; transition: transform var(--dur-fast) ease-out; }
+.cta:hover svg.cta-arrow { transform: translateX(3px); }
+.cta:hover svg.cta-arrow-down { transform: translateY(3px); }
+
+/* ── Size modifiers ────────────────────────────────────────────── */
+.cta-sm {
+  padding: var(--cta-sm-pad-v) var(--cta-sm-pad-h);
+  font-size: var(--cta-sm-fs);
+  border-radius: 8px;
+}
+.cta-md {
+  padding: var(--cta-md-pad-v) var(--cta-md-pad-h);
+  font-size: var(--cta-md-fs);
+  border-radius: 8px;
+}
+.cta-lg {
+  padding: var(--cta-pad-v) var(--cta-pad-h);
+  font-size: var(--cta-fs);
+  border-radius: var(--cta-radius);
+}
+.cta-icon {
+  padding: var(--cta-sm-pad-v);
+  font-size: var(--cta-sm-fs);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  justify-content: center;
+}
+
+/* ── Variant: primary — gradient fill ─────────────────────────── */
+.cta-primary {
+  color: var(--text-on-gradient);
+  background: linear-gradient(135deg, var(--grad-1) 0%, var(--grad-2) 50%, var(--grad-3) 100%);
+  box-shadow:
+    0 10px 30px -10px color-mix(in oklab, var(--grad-2) 50%, transparent),
+    inset 0 1px 0 0 color-mix(in oklab, var(--text-on-gradient) 18%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+.cta-primary:hover { filter: brightness(1.06); }
+.cta-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--text-on-gradient) 28%, transparent), transparent);
+  transition: transform var(--dur-base) ease-out;
+  pointer-events: none;
+}
+.cta-primary:hover::after { transform: translateX(100%); }
+
+/* ── Variant: secondary — outlined ────────────────────────────── */
+.cta-secondary {
+  color: var(--text-primary);
+  background: var(--surface-hint);
+  border-color: color-mix(in oklab, var(--text-on-gradient) 10%, transparent);
+}
+.cta-secondary:hover {
+  background: color-mix(in oklab, var(--text-on-gradient) 5%, transparent);
+  border-color: color-mix(in oklab, var(--text-on-gradient) 20%, transparent);
+}
+/* App-context override (light + dark themes): use theme surface tokens */
+[data-theme] .cta-secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--tx);
+}
+[data-theme] .cta-secondary:hover {
+  background: var(--elev);
+  border-color: var(--border-2);
+}
+
+/* ── Variant: ghost — transparent with hover ──────────────────── */
+.cta-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+.cta-ghost:hover {
+  background: color-mix(in oklab, var(--text-on-gradient) 5%, transparent);
+  color: var(--text-primary);
+}
+[data-theme] .cta-ghost {
+  color: var(--tx2);
+}
+[data-theme] .cta-ghost:hover {
+  background: var(--surface);
+  color: var(--tx);
+  border-color: var(--border);
+}
+
+/* ── Variant: destructive ─────────────────────────────────────── */
+.cta-destructive {
+  background: color-mix(in oklab, var(--status-error) 10%, transparent);
+  border-color: color-mix(in oklab, var(--status-error) 20%, transparent);
+  color: var(--status-error);
+}
+.cta-destructive:hover {
+  background: color-mix(in oklab, var(--status-error) 20%, transparent);
+}
+
+/* ── Variant: link — inline text ─────────────────────────────── */
+.cta-link {
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+}
+.cta-link:hover { color: var(--text-secondary); }
+.cta-link:active { transform: none; }
+
+/* ── Modifier: block — full-width, smaller radius (auth submits) */
+.cta-block { width: 100%; justify-content: center; border-radius: 10px; }
+
+/* ── Feature card inner glow — CSS hover trigger ──────────────── */
+.feature-card-body:hover .feature-inner-glow { opacity: 0.6; }
+
+/* ── Feature card keyboard focus ─────────────────────────────── */
+.feature-tilt-card { outline: none; }
+.feature-tilt-card:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--grad-1);
+  border-radius: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta, .cta svg, .cta-primary::after { transition: none; }
+  .cta:active { transform: none; }
+}
+
+/* ── Marketing nav link hover (CSS-only) ─────────────────────── */
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--dur-fast) ease;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid var(--grad-1);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── Nav mobile: collapse to logo + CTA only ─────────────────── */
+@media (max-width: 600px) {
+  .nav-hide-mobile { display: none; }
+  .marketing-nav .cta-primary {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+/* ── Auth "Forgot password?" link ─────────────────────────────── */
+.auth-forgot-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--dur-ui);
+}
+.auth-forgot-link:hover { color: var(--text-primary); }
+
+/* ── Focus ring utilities (replaces onFocus/onBlur DOM mutations) ── */
+.focus-ring { outline: none; }
+.focus-ring:focus-visible { box-shadow: 0 0 0 2px var(--grad-1); }
+
+.focus-ring-inset { outline: none; }
+.focus-ring-inset:focus-visible { box-shadow: inset 0 0 0 2px var(--grad-1); }
+
+.focus-ring-error { outline: none; }
+.focus-ring-error:focus-visible { box-shadow: 0 0 0 2px var(--status-error); }
+
+/* hover-border: for button-shaped controls that show a brighter border on hover */
+.hover-border:hover { border-color: var(--border-2); }
+
+/* input-field: replaces onFocus/onBlur for native inputs and textareas */
+.input-field { outline: none; }
+.input-field:focus {
+  border-color: var(--grad-1);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--grad-1) 20%, transparent);
+}
+.input-field.input-error { border-color: var(--status-error); }
+.input-field.input-error:focus { border-color: var(--grad-1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-ring:focus-visible,
+  .focus-ring-inset:focus-visible,
+  .focus-ring-error:focus-visible { transition: none; }
+}
+
+/* ── Landing section standardized vertical padding ───────────── */
+.landing-section {
+  padding-top: var(--section-v);
+  padding-bottom: var(--section-v);
+  position: relative;
+}
+
+.landing-section--first {
+  padding-top: 80px;
+}
+
+@media (max-width: 768px) {
+  .landing-section {
+    padding-top: var(--section-v-sm);
+    padding-bottom: var(--section-v-sm);
+  }
+}
+
+/* ── Reduced motion ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-glow-1,
+  .ambient-glow-2,
+  .grad-text-sweep {
+    animation: none !important;
+  }
+
+  .feature-card,
+  .feature-card:hover {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
