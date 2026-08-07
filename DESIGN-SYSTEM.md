@@ -1,121 +1,128 @@
-# UI/UX Standards for Murmr
+# Murmr Design System
 
-Treat every component as a craft decision. Match the bar of Linear, Vercel, Stripe, Featurebase — not generic SaaS templates.
+The visual and interaction standards Murmr is built against. Written before implementation and used as the reference throughout — every component was checked against the checklists below before being considered done.
 
-## Design principles (apply to every component)
+The bar is Linear, Vercel, Stripe, Featurebase. Not generic SaaS templates.
 
-1. **Spacing is the design.** Use 4/8/12/16/24/32/48/64px scale only. Generous whitespace > cramped layouts. Default to more padding, not less.
-2. **Typography is hierarchy.** Establish clear scale (display / h1 / h2 / body / small / mono). Never use more than 3 sizes per screen.
-3. **Color is rare.** Most UI is neutral. The gradient is a highlight, used on 1-2 elements per screen max — never walls of gradient.
-4. **Contrast over decoration.** A simple element with strong contrast beats a decorated one. No drop shadows unless purposeful. No borders unless they separate meaning.
-5. **One focal point per screen.** The eye should know where to land first. Everything else recedes.
-6. **States are not optional.** Every interactive element needs: default, hover, active, focus-visible, disabled, loading. Every async UI needs: loading, empty, error, success.
+## Design principles
 
-## Brand tokens (do not modify)
+**Spacing is the design.** A strict 4/8/12/16/24/32/48/64px scale, no exceptions. Generous whitespace over cramped layouts — default to more padding, not less.
 
-Dark theme:
-- Background: #08070D
-- Surface: #11101A
-- Surface elevated: #1A1825
-- Border: #2A2638
-- Text primary: #F4F2FA / secondary: #A8A2BD / tertiary: #6B6580
+**Typography is hierarchy.** A defined scale (display, h1, h2, body, small, mono) with no more than three sizes on any single screen.
 
-Brand gradient: linear-gradient(135deg, #8B5CF6 0%, #D946EF 50%, #06B6D4 100%)
+**Color is rare.** Most of the UI is neutral. The brand gradient appears on one or two elements per screen at most — never as a background wash.
 
-Status colors (functional, never decorative):
-- Open: #A8A2BD / Planned: #06B6D4 / In Progress: #D946EF / Shipped: #10B981 / Closed: #6B6580
+**Contrast over decoration.** A simple element with strong contrast beats a decorated one. Shadows only where they communicate elevation. Borders only where they separate meaning.
 
-Light theme (app only):
-- Background: #FAFAFC / Surface: #FFFFFF / Border: #E5E3EE
-- Text primary: #0F0E1A / secondary: #5C5870
+**One focal point per screen.** The eye should know where to land first. Everything else recedes.
 
-Typography: Geist (display + body), Geist Mono (technical accents).
+**States are not optional.** Every interactive element has default, hover, active, focus-visible, disabled, and loading states. Every async surface has loading, empty, error, and success states.
 
-## Component checklist (before declaring any component done)
+## Tokens
 
-- [ ] Hover state defined (subtle — opacity shift, slight scale, or color tint)
-- [ ] Focus state visible (gradient ring, never default browser outline)
-- [ ] Active/pressed state defined
-- [ ] Disabled state visually clear (opacity 0.4, cursor not-allowed)
-- [ ] Loading state (skeleton, spinner, or shimmer — never blank)
-- [ ] Empty state with helpful copy + CTA (never just "No data")
-- [ ] Error state with recovery action
-- [ ] Keyboard accessible (Tab, Enter, Esc work as expected)
-- [ ] Screen reader labels on icon-only buttons
-- [ ] Mobile responsive (test at 390px width)
-- [ ] Works in both light and dark theme (for app components — landing is dark-only)
+Every value in the codebase resolves through a CSS custom property. No hardcoded colors, spacing, font sizes, radii, or durations outside `:root`.
 
-## Animation principles
+**Surfaces (dark)** — base, surface, surface-elevated, border, border-strong
 
-- **Purpose over decoration.** Every animation must answer "what does this communicate?" If nothing, remove it.
-- **Duration:** UI feedback 150-200ms, transitions 250-400ms, hero/cinematic 600-1200ms. Never longer.
-- **Easing:** Use `cubic-bezier(0.16, 1, 0.3, 1)` (easeOutExpo) for premium "settling" feel. `easeOut` for entrances, `easeIn` for exits.
-- **Stagger lists.** When revealing 3+ items, stagger by 50-80ms each.
-- **Respect `prefers-reduced-motion`.** Reduce or skip motion when set.
+**Text** — primary, secondary, tertiary. Hierarchy is built with these rather than with color.
 
-## Forms
+**Brand gradient** — a three-stop violet → magenta → cyan gradient at 135°, exposed as three individual stop tokens so components can reference them independently.
 
-- Labels above inputs (not floating, not placeholder-only).
-- Inline validation on blur, not on every keystroke.
-- Errors below the field in red, never as alerts.
-- Submit button reflects state: idle / loading / success.
-- Password inputs have a show/hide toggle.
-- Multi-step forms show progress (step indicator at top).
-- Long forms get section headers, not one giant blob.
+**Status colors** — Open, Planned, In Progress, Shipped, Closed. Functional only; never used as decorative accents.
+
+**Light theme** — app surfaces only. The marketing site is dark-only by design.
+
+**Typography** — Geist for display and body, Geist Mono for technical accents like timestamps, counts, and labels.
+
+**Durations** — micro (100ms), ui (150ms), fast (200ms), medium (300ms), base (600ms), slow (900ms), cinematic (1200ms).
+
+**Easing** — `cubic-bezier(0.16, 1, 0.3, 1)` for entrances. It decelerates in a way that reads as settling rather than stopping.
+
+## Component checklist
+
+No component ships without all of these:
+
+- Hover state — subtle: opacity shift, slight scale, or color tint
+- Focus-visible state — gradient ring, never the browser default outline
+- Active state — a small scale-down so presses register
+- Disabled state — reduced opacity, `cursor: not-allowed`
+- Loading state — skeleton, spinner, or shimmer; never blank
+- Empty state — helpful copy plus a next action, never just "No data"
+- Error state — with a recovery action
+- Keyboard accessible — Tab, Enter, and Escape behave as expected
+- Screen reader labels on icon-only controls
+- Responsive to 390px
+- Works in both themes (app components; the landing is dark-only)
+
+## Animation
+
+**Purpose over decoration.** Every animation should answer "what does this communicate?" If nothing, it goes.
+
+**Duration by tier.** UI feedback 100–200ms. Transitions 250–400ms. Cinematic reveals 600–1200ms. Nothing longer.
+
+**Stagger lists.** Three or more items reveal with 50–80ms between each.
+
+**Transform and opacity only.** Scroll-driven animation never touches layout properties — no width, height, top, or margin in an animation loop.
+
+**Respect `prefers-reduced-motion`.** Every animated component checks it. Motion is reduced or removed entirely, never just shortened.
 
 ## Buttons
 
-- Primary: gradient fill, white text, used for the single most important action per screen.
-- Secondary: surface background with border, used for adjacent actions.
-- Tertiary/ghost: no background, just text + hover, used for low-priority actions.
-- Destructive: red text or red fill, confirmation required for irreversible actions.
-- Never have two primary buttons next to each other.
-- Loading buttons show spinner inside, keep width stable.
+One system, applied everywhere. All values resolve through shared tokens, so a button in the nav and a submit in an auth form are dimensionally identical.
 
-## Lists & cards
+**Sizes** — sm for compact controls, md as the default, lg for hero and footer CTAs. Sizes differ only in padding and font size; everything else is shared.
 
-- Cards have consistent padding (16-20px).
-- Lists have visible hover state on rows.
-- Use dividers OR cards, never both.
-- Long lists need: infinite scroll, pagination, OR virtualization. Never raw-render 100+ items.
-- Empty list state shows illustration + helpful text + CTA.
+**Variants** — primary (gradient fill), secondary (outlined, same silhouette), link (inline text).
+
+**Modifier** — block, for full-width form submits. Overrides width and radius only.
+
+Rules: never two primary buttons adjacent. Loading buttons keep their width stable with the spinner inside. Destructive actions require confirmation.
+
+## Forms
+
+- Labels above inputs — not floating, not placeholder-only
+- Validate on blur, not on every keystroke
+- Errors below the field, never as alerts
+- Submit buttons reflect state: idle, loading, success
+- Password inputs have a show/hide toggle
+- Multi-step forms show a progress indicator
+- Long forms use section headers
+
+## Lists and cards
+
+- Consistent card padding within a given context
+- Visible hover state on interactive rows
+- Dividers or cards, never both
+- Long lists need pagination, infinite scroll, or virtualization — never raw-render 100+ items
+- Empty states get an icon, a heading, and a next action
 
 ## Iconography
 
-- Use Lucide icons only.
-- 16px for inline, 20px for buttons, 24px for nav.
-- Pair icons with text labels for clarity (except in dense UI like toolbars).
-- `aria-label` on icon-only buttons.
+Lucide only. 16px inline, 20px in buttons, 24px in navigation. Icons pair with text labels except in dense toolbars. Icon-only controls carry an `aria-label`.
 
-## Color usage rules
+## Color usage
 
-- Gradient: primary CTAs, key highlights, hero text, logo. Sparingly.
-- Status colors: only on status indicators, never as UI accents.
-- Success green: only for "shipped" status and success toasts.
-- Error red: only for errors, never for "delete" actions in default state.
-- Use `--text-secondary` and `--text-tertiary` to create hierarchy without color.
+- Gradient: primary CTAs, key highlights, hero text, logo — sparingly
+- Status colors: only on status indicators
+- Green: only for shipped status and success confirmations
+- Red: only for errors and destructive confirmation, never for a delete control at rest
+- Build hierarchy with text tokens, not with color
 
-## Anti-patterns (never do these)
+## Anti-patterns
 
-- ❌ Generic Material/Bootstrap defaults
-- ❌ Drop shadow on everything
-- ❌ Rainbow gradients or multiple gradient directions on one screen
-- ❌ Modals that can't be closed with Esc
-- ❌ Forms that lose data on validation error
-- ❌ Spinners that block the whole page for >300ms (use skeleton instead)
-- ❌ Three-column "feature/feature/feature" layouts (too generic)
-- ❌ "Click here" links — make link text descriptive
-- ❌ All-caps body text
-- ❌ Tiny tap targets on mobile (<44×44px)
-- ❌ Pill-shaped buttons (use 8-12px radius)
-- ❌ Bright halos/glows around buttons (subtle box-shadow only)
+- Generic Material or Bootstrap defaults
+- Drop shadows applied indiscriminately
+- Multiple gradient directions on one screen
+- Modals that don't close on Escape
+- Forms that lose data on validation error
+- Full-page blocking spinners past 300ms — use a skeleton
+- Three-column feature grids as a default layout choice
+- "Click here" links — link text describes the destination
+- All-caps body text
+- Tap targets under 44×44px on mobile
+- Glows or halos around buttons — subtle shadow only
+- Direct DOM style mutation for hover and focus states — use CSS pseudo-classes
 
-## Visual reference
+## Reference points
 
-The `design-reference/` folder contains the source-of-truth visual mockups for landing and app screens. Match their spacing, layout, typography, and interaction quality precisely. When a screen has no reference (auth, settings, 404, modals), design fresh in the same visual language.
-
-## When in doubt
-
-Reference designs from: Linear, Vercel, Stripe, Featurebase, Productlane, Cal.com. Open the actual sites if uncertain.
-
-Ask before deviating from this file.
+Linear, Vercel, Stripe, Featurebase, Productlane, Cal.com.
