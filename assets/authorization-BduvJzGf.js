@@ -1,0 +1,1 @@
+function a(n){return(n==null?void 0:n.role)==="admin"}function i(n,t){return(n==null?void 0:n.id)===t}function c(n,t){return i(n,t)||a(n)}function o(n,t){return i(n,t)||a(n)}function d(n,t){return i(n,t)}function e(n,t){return i(n,t)||a(n)}export{e as a,c as b,d as c,o as d,a as i};
