@@ -301,8 +301,7 @@ export default function PostDetailPage() {
                     <button
                       type="button"
                       onClick={() => setStatusOpen((o) => !o)}
-                      className="active:scale-[0.97]"
-                      className="focus-ring"
+                      className="active:scale-[0.97] focus-ring"
                       style={{
                         background: 'none',
                         border: 'none',
