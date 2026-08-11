@@ -1,1 +1,0 @@
-import{g as s}from"./index-CFblc-L-.js";import{u}from"./useQuery-UPxLrIhL.js";import{u as t}from"./users-Jg9jCVDR.js";function p(){const{data:e=[]}=u({queryKey:["users"],queryFn:t.list,staleTime:3e5});return s.useMemo(()=>new Map(e.map(r=>[r.id,r])),[e])}export{p as u};

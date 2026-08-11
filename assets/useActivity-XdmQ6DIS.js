@@ -1,4 +1,4 @@
-import{l as a,$ as s,a0 as r}from"./index-CFblc-L-.js";import{u as c}from"./useQuery-UPxLrIhL.js";/**
+import{l as a,$ as s,a0 as r}from"./index-BUdpUfw6.js";import{u as c}from"./useQuery-BIvrrNvj.js";/**
  * @license lucide-react v0.441.0 - ISC
  *
  * This source code is licensed under the ISC license.
