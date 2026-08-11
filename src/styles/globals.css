@@ -387,6 +387,7 @@ button {
   border: 1px solid transparent;
   background: none;
   text-decoration: none;
+  border-radius: var(--cta-radius);
   transition:
     background-color var(--dur-fast) ease-out,
     border-color var(--dur-fast) ease-out,
@@ -413,22 +414,18 @@ button {
 .cta-sm {
   padding: var(--cta-sm-pad-v) var(--cta-sm-pad-h);
   font-size: var(--cta-sm-fs);
-  border-radius: 8px;
 }
 .cta-md {
   padding: var(--cta-md-pad-v) var(--cta-md-pad-h);
   font-size: var(--cta-md-fs);
-  border-radius: 8px;
 }
 .cta-lg {
   padding: var(--cta-pad-v) var(--cta-pad-h);
   font-size: var(--cta-fs);
-  border-radius: var(--cta-radius);
 }
 .cta-icon {
   padding: var(--cta-sm-pad-v);
   font-size: var(--cta-sm-fs);
-  border-radius: 8px;
   width: 36px;
   height: 36px;
   justify-content: center;
