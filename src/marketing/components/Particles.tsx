@@ -7,7 +7,8 @@ type Particle = {
   stop0: string; stop1: string;
 };
 
-const HUES = [270, 295, 195]; // violet, magenta, cyan — matches brand tokens
+// Single violet hue matching --grad-1 (#8B5CF6 ≈ hsl(262, 87%, 65%))
+const HUE = 262;
 
 export function Particles({ density = 60 }: { density?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -25,18 +26,17 @@ export function Particles({ density = 60 }: { density?: number }) {
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const spawn = (): Particle => {
-      const hue = HUES[Math.floor(Math.random() * HUES.length)];
-      const a = Math.random() * 0.5 + 0.45;
+      const a = Math.random() * 0.40 + 0.30;
       return {
         x: Math.random() * canvas.clientWidth,
         y: Math.random() * canvas.clientHeight,
         vx: (Math.random() - 0.5) * 0.18,
         vy: (Math.random() - 0.5) * 0.14 - 0.05,
-        r: Math.random() * 2.4 + 0.8,
-        hue,
+        r: Math.random() * 1.8 + 0.6,
+        hue: HUE,
         a,
-        stop0: `hsla(${hue}, 90%, 70%, ${a})`,
-        stop1: `hsla(${hue}, 90%, 70%, 0)`,
+        stop0: `hsla(${HUE}, 87%, 68%, ${a})`,
+        stop1: `hsla(${HUE}, 87%, 68%, 0)`,
       };
     };
 
@@ -63,12 +63,12 @@ export function Particles({ density = 60 }: { density?: number }) {
           if (p.y < -10) p.y = canvas.clientHeight + 10;
           if (p.y > canvas.clientHeight + 10) p.y = -10;
         }
-        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 7);
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 6);
         grad.addColorStop(0, p.stop0);
         grad.addColorStop(1, p.stop1);
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * 7, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.r * 6, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.setTransform(1, 0, 0, 1, 0, 0);

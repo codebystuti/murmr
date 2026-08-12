@@ -355,23 +355,6 @@ button {
   opacity: 1;
 }
 
-/* ── Legacy gradient button (auth flows only — do not use on landing) */
-.gradient-btn {
-  transition: transform var(--dur-fast) var(--ease-out-expo), box-shadow var(--dur-fast);
-}
-.gradient-btn:hover:not(:disabled) { transform: translateY(-1px); }
-
-/* ── Legacy ghost button (kept for backwards compat) ─────────── */
-.ghost-btn {
-  color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-dark);
-  cursor: pointer;
-  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
-}
-.ghost-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
-.ghost-btn:focus-visible { outline: 2px solid var(--grad-1); outline-offset: 3px; border-radius: inherit; }
-
 /* ── CTA design token system ─────────────────────────────────── */
 
 /* Shared base */
@@ -473,6 +456,19 @@ button {
   background: var(--elev);
   border-color: var(--border-2);
 }
+/* Landing is dark-only — deliberately overrides [data-theme] .cta-secondary.
+   html prefix raises specificity to (0,2,1) > (0,2,0) so this wins structurally,
+   not by declaration order. The [data-theme] rule is an intentional exception for
+   the app (light-mode secondary needs a surface fill to be visible on #FAFAFC). */
+html .marketing-root .cta-secondary {
+  background: var(--surface-hint);
+  border-color: color-mix(in oklab, var(--text-on-gradient) 12%, transparent);
+  color: var(--text-primary);
+}
+html .marketing-root .cta-secondary:hover {
+  background: color-mix(in oklab, var(--text-on-gradient) 6%, transparent);
+  border-color: color-mix(in oklab, var(--text-on-gradient) 22%, transparent);
+}
 
 /* ── Variant: ghost — transparent with hover ──────────────────── */
 .cta-ghost {
@@ -484,6 +480,7 @@ button {
   background: color-mix(in oklab, var(--text-on-gradient) 5%, transparent);
   color: var(--text-primary);
 }
+/* App-context override (intentional exception — same rationale as .cta-secondary) */
 [data-theme] .cta-ghost {
   color: var(--tx2);
 }
@@ -491,6 +488,15 @@ button {
   background: var(--surface);
   color: var(--tx);
   border-color: var(--border);
+}
+/* Landing guard — (0,2,1) beats [data-theme] .cta-ghost (0,2,0) structurally */
+html .marketing-root .cta-ghost {
+  color: var(--text-secondary);
+}
+html .marketing-root .cta-ghost:hover {
+  background: color-mix(in oklab, var(--text-on-gradient) 5%, transparent);
+  color: var(--text-primary);
+  border-color: transparent;
 }
 
 /* ── Variant: destructive ─────────────────────────────────────── */

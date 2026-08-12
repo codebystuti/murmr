@@ -6,6 +6,23 @@ import { SectionHeader } from './SectionHeader';
 function Quote() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+      {/* Decorative opening quotation mark — replaces the literal quotes in the copy */}
+      <div
+        aria-hidden="true"
+        style={{
+          fontSize: 'clamp(64px, 8vw, 88px)',
+          lineHeight: 1,
+          fontWeight: 700,
+          background: 'linear-gradient(135deg, var(--grad-1), var(--grad-2))',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          userSelect: 'none',
+          marginBottom: -8,
+        }}
+      >
+        &#x201C;
+      </div>
       <p
         style={{
           fontSize: 'clamp(18px, 2.2vw, 24px)',
@@ -18,8 +35,8 @@ function Quote() {
           textAlign: 'center',
         }}
       >
-        "We used to drown in Slack threads. Murmr turned that chaos into a ranked queue — our
-        roadmap finally reflects what users actually need."
+        We used to drown in Slack threads. Murmr turned that chaos into a ranked queue — our
+        roadmap finally reflects what users actually need.
       </p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div
@@ -40,7 +57,17 @@ function Quote() {
           J
         </div>
         <div style={{ textAlign: 'left' }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+          <p
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              margin: 0,
+              background: 'linear-gradient(135deg, var(--grad-1), var(--grad-2))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
             Jordan M.
           </p>
           <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: 0, fontFamily: 'var(--font-mono)' }}>
