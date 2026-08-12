@@ -1,1 +1,0 @@
-import{g as s}from"./index-BUdpUfw6.js";import{u}from"./useQuery-BIvrrNvj.js";import{u as t}from"./users-C7vIpJN4.js";function p(){const{data:e=[]}=u({queryKey:["users"],queryFn:t.list,staleTime:3e5});return s.useMemo(()=>new Map(e.map(r=>[r.id,r])),[e])}export{p as u};
