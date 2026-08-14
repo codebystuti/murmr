@@ -11,7 +11,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "predeploy": "npm run build && cp dist/index.html dist/404.html",
+    "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "generate-og": "node scripts/gen-og-image.mjs"
   },
