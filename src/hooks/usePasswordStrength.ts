@@ -14,6 +14,7 @@ export function usePasswordStrength(password: string) {
   const score = useMemo((): StrengthLevel => {
     if (!password) return 0;
     let s = 0;
+    if (/[a-z]/.test(password)) s++;
     if (password.length >= 8) s++;
     if (password.length >= 12) s++;
     if (/[A-Z]/.test(password)) s++;

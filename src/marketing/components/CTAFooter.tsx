@@ -85,7 +85,7 @@ export default function CTAFooter() {
         {/* CTA */}
         <Link to="/signup" className="cta cta-primary cta-lg" style={{ marginBottom: 16 }}>
           Start listening
-          <ArrowRight size={18} className="cta-arrow" />
+          <ArrowRight size={16} className="cta-arrow" />
         </Link>
 
         <p

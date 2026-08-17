@@ -92,16 +92,16 @@ export default function InTheFieldSection() {
   const smooth = useSpring(scrollYProgress, { stiffness: 40, damping: 22, restDelta: 0.0005 });
 
   // Scale completes at 0.40, opacity at 0.32 — dashboard fully present by 0.40.
-  // Crossfade starts at 0.58: 18% hold where dashboard sits at full size before anything changes.
+  // Dashboard holds 0.32→0.55, then fades out 0.55→0.70 — fully gone before quote starts.
   const dashScale   = useTransform(smooth, [0, 0.40], [0.55, 1.0]);
   const dashOpacity = useTransform(
     smooth,
-    [0,   0.32, 0.58, 0.78],
+    [0,   0.32, 0.55, 0.70],
     [0.3, 1.0,  1.0,  0],
   );
 
-  // Quote: 20% crossfade window (0.58→0.78), starting after the dashboard hold.
-  const quoteOpacity = useTransform(smooth, [0.58, 0.78], [0, 1]);
+  // Quote: starts at exactly 0.70 (dashboard fully gone), complete at 0.88. Zero bleed-through.
+  const quoteOpacity = useTransform(smooth, [0.70, 0.88], [0, 1]);
 
   /* ── REDUCED MOTION: static layout ──────────────────────────── */
   if (shouldReduceMotion) {
@@ -122,6 +122,7 @@ export default function InTheFieldSection() {
               border: `1px solid color-mix(in oklab, var(--text-on-gradient) 7%, transparent)`,
               boxShadow: '0 32px 80px -20px rgba(0,0,0,0.5)',
               maxWidth: 1120,
+              maxHeight: '80vh',
               margin: '0 auto 48px',
             }}
           >
@@ -173,6 +174,7 @@ export default function InTheFieldSection() {
               style={{
                 width: '100%',
                 maxWidth: 1120,
+                maxHeight: '80vh',
                 borderRadius: 'var(--radius-container)',
                 overflow: 'hidden',
                 border: `1px solid color-mix(in oklab, var(--text-on-gradient) 10%, transparent)`,

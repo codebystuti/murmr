@@ -181,7 +181,7 @@ export default function HeroSection() {
           </Link>
 
           <a href="#how-it-works" className="cta cta-secondary cta-lg">
-            <Play size={14} fill="currentColor" />
+            <Play size={16} fill="currentColor" />
             See how it works
           </a>
         </motion.div>

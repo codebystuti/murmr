@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { AuthPageLayout } from '@/features/auth/components/AuthPageLayout';
@@ -154,8 +154,8 @@ export default function LoginPage() {
           style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', marginTop: 24, marginBottom: 0 }}
         >
           Don&apos;t have an account?{' '}
-          <Link to="/signup" style={{ color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 500 }}>
-            Sign up →
+          <Link to="/signup" style={{ color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            Sign up <ArrowRight size={16} />
           </Link>
         </motion.p>
 

@@ -358,8 +358,6 @@ export function DashboardMock() {
     { title: 'Export to CSV', votes: 27 },
     { title: 'Webhook notifications', votes: 21 },
     { title: 'OAuth providers', votes: 17 },
-    { title: 'Two-factor auth', votes: 14 },
-    { title: 'Bulk status update', votes: 11 },
   ];
 
   const activity = [
@@ -370,17 +368,10 @@ export function DashboardMock() {
     { user: 'Riley', action: 'shipped', target: 'CSV export', color: 'var(--status-shipped)' },
     { user: 'Morgan', action: 'commented on', target: 'Two-factor auth', color: 'var(--grad-3)' },
     { user: 'Quinn', action: 'submitted', target: 'Slack integration', color: 'var(--grad-1)' },
+    { user: 'Dana', action: 'upvoted', target: 'Bulk status update', color: 'var(--grad-2)' },
+    { user: 'Avery', action: 'commented on', target: 'Export to CSV', color: 'var(--grad-3)' },
+    { user: 'Jordan', action: 'submitted', target: 'Priority inbox', color: 'var(--grad-1)' },
   ];
-
-  const topPosts = [
-    { title: 'Dark mode support', votes: 42, status: 'Planned', statusColor: 'var(--status-planned)', comments: 12 },
-    { title: 'Keyboard shortcuts', votes: 38, status: 'In Progress', statusColor: 'var(--status-progress)', comments: 8 },
-    { title: 'Export to CSV', votes: 27, status: 'Shipped', statusColor: 'var(--status-shipped)', comments: 5 },
-    { title: 'Webhook notifications', votes: 21, status: 'Open', statusColor: 'var(--status-open)', comments: 3 },
-    { title: 'OAuth providers', votes: 17, status: 'Planned', statusColor: 'var(--status-planned)', comments: 6 },
-  ];
-
-  const chartBars = [55, 40, 72, 60, 88, 65, 94];
 
   return (
     <div
@@ -452,28 +443,6 @@ export function DashboardMock() {
             </p>
           </div>
         ))}
-      </div>
-
-      {/* Weekly activity chart */}
-      <div style={{ padding: '0 12px 10px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-          <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', margin: 0, letterSpacing: '0.05em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
-            Posts this week
-          </p>
-          <span style={{ fontSize: 9, color: 'var(--status-shipped)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
-            +23%
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 44, padding: '0 2px' }}>
-          {chartBars.map((pct, i) => (
-            <div key={i} style={{ flex: 1, height: `${pct}%`, borderRadius: 3, background: i === 6 ? 'linear-gradient(to top, var(--grad-1), var(--grad-2))' : 'color-mix(in oklab, var(--text-on-gradient) 10%, transparent)' }} />
-          ))}
-        </div>
-        <div style={{ display: 'flex', marginTop: 3 }}>
-          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-            <span key={i} style={{ fontSize: 8, color: i === 6 ? 'var(--grad-2)' : 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', flex: 1, textAlign: 'center' }}>{d}</span>
-          ))}
-        </div>
       </div>
 
       {/* Trending + Activity */}
@@ -548,56 +517,6 @@ export function DashboardMock() {
         </div>
       </div>
 
-      {/* Top posts this week */}
-      <div style={{ padding: '10px 12px 14px', borderTop: '1px solid var(--border-dark)' }}>
-        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', margin: '0 0 7px', letterSpacing: '0.05em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
-          Top posts this week
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {topPosts.map((p, i) => (
-            <div
-              key={p.title}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '7px 10px',
-                borderRadius: 8,
-                background: 'color-mix(in oklab, var(--text-on-gradient) 2%, transparent)',
-                border: '1px solid color-mix(in oklab, var(--text-on-gradient) 5%, transparent)',
-              }}
-            >
-              <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--grad-1)', fontFamily: 'var(--font-mono)', minWidth: 14 }}>
-                #{i + 1}
-              </span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {p.title}
-              </span>
-              <span
-                style={{
-                  fontSize: 8,
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  padding: '2px 6px',
-                  borderRadius: 999,
-                  border: `1px solid color-mix(in oklab, ${p.statusColor} 35%, transparent)`,
-                  background: `color-mix(in oklab, ${p.statusColor} 14%, transparent)`,
-                  color: p.statusColor,
-                  fontFamily: 'var(--font-mono)',
-                  flexShrink: 0,
-                }}
-              >
-                {p.status}
-              </span>
-              <div style={{ display: 'flex', gap: 8, fontSize: 9, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
-                <span>↑{p.votes}</span>
-                <span>💬{p.comments}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

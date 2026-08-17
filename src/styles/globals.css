@@ -389,7 +389,7 @@ button {
   cursor: not-allowed;
   pointer-events: none;
 }
-.cta svg { flex-shrink: 0; transition: transform var(--dur-fast) ease-out; }
+.cta svg { flex-shrink: 0; width: 16px; height: 16px; transition: transform var(--dur-fast) ease-out; }
 .cta:hover svg.cta-arrow { transform: translateX(3px); }
 .cta:hover svg.cta-arrow-down { transform: translateY(3px); }
 

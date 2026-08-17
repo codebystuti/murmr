@@ -5,8 +5,8 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.06,
-      delayChildren: 0.10,
+      staggerChildren: 0.14,
+      delayChildren: 0.20,
     },
   },
 };
@@ -17,9 +17,8 @@ export const itemVariants = {
     y: 0,
     opacity: 1,
     transition: {
-      type: 'spring' as const,
-      stiffness: 120,
-      damping: 18,
+      duration: 0.9,
+      ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
     },
   },
 };

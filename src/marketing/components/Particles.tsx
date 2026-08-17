@@ -26,13 +26,13 @@ export function Particles({ density = 60 }: { density?: number }) {
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const spawn = (): Particle => {
-      const a = Math.random() * 0.40 + 0.30;
+      const a = Math.random() * 0.35 + 0.30;
       return {
         x: Math.random() * canvas.clientWidth,
         y: Math.random() * canvas.clientHeight,
         vx: (Math.random() - 0.5) * 0.18,
         vy: (Math.random() - 0.5) * 0.14 - 0.05,
-        r: Math.random() * 1.8 + 0.6,
+        r: Math.random() * 1.6 + 0.6,
         hue: HUE,
         a,
         stop0: `hsla(${HUE}, 87%, 68%, ${a})`,
