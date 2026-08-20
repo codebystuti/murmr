@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Plus,
   Zap,
+  ArrowRight,
 } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { SubmitFeedbackModal } from '@/components/shared/SubmitFeedbackModal';
@@ -57,8 +58,8 @@ function StatCard({ label, value, icon, accentColor, index, onClick }: StatCardP
       initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: shouldReduceMotion ? 0.01 : 0.25,
-        delay: shouldReduceMotion ? 0 : index * 0.06,
+        duration: shouldReduceMotion ? 0.01 : 0.5,
+        delay: shouldReduceMotion ? 0 : index * 0.08,
         ease: [0.16, 1, 0.3, 1],
       }}
       onClick={onClick}
@@ -210,8 +211,8 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{
-                      duration: shouldReduceMotion ? 0.01 : 0.2,
-                      delay: shouldReduceMotion ? 0 : i * 0.05,
+                      duration: shouldReduceMotion ? 0.01 : 0.5,
+                      delay: shouldReduceMotion ? 0 : i * 0.08,
                       ease: [0.16, 1, 0.3, 1],
                     }}
                     role="button"
@@ -302,9 +303,10 @@ export default function DashboardPage() {
                 type="button"
                 onClick={() => { markSeen(); navigate('/app/activity'); }}
                 className="text-[var(--tx3)] hover:text-[var(--tx)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
-                style={{ fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', transition: 'color var(--dur-ui)', fontFamily: 'var(--font-body)' }}
+                style={{ fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', transition: 'color var(--dur-ui)', fontFamily: 'var(--font-body)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
               >
-                View all →
+                View all
+                <ArrowRight size={12} />
               </button>
             </div>
 

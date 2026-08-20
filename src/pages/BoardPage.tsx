@@ -267,8 +267,8 @@ export default function BoardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.98 }}
                   transition={{
-                    duration: shouldReduceMotion ? 0.1 : 0.2,
-                    delay: shouldReduceMotion ? 0 : Math.min(index * 0.04, 0.3),
+                    duration: shouldReduceMotion ? 0.1 : 0.4,
+                    delay: shouldReduceMotion ? 0 : Math.min(index * 0.08, 0.48),
                     ease: [0.16, 1, 0.3, 1],
                   }}
                 >

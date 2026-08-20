@@ -40,9 +40,11 @@ export const authApi = {
     return newUser;
   },
 
-  async forgotPassword(_email: string): Promise<void> {
+  async forgotPassword(email: string): Promise<{ found: boolean }> {
     await delay(800);
-    // Mock: always succeeds
+    const users = getUsers();
+    const found = users.some((u) => u.email.toLowerCase() === email.toLowerCase());
+    return { found };
   },
 
   async resetPassword(token: string, _password: string): Promise<void> {

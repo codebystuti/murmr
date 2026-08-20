@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { AuthPageLayout } from '@/features/auth/components/AuthPageLayout';
@@ -18,13 +18,15 @@ type FormData = z.infer<typeof schema>;
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailFound, setEmailFound] = useState(false);
 
   const form = useForm<FormData>({ resolver: zodResolver(schema) });
 
   async function onSubmit(data: FormData) {
     setLoading(true);
     try {
-      await authApi.forgotPassword(data.email);
+      const { found } = await authApi.forgotPassword(data.email);
+      setEmailFound(found);
       setSent(true);
     } finally {
       setLoading(false);
@@ -78,30 +80,34 @@ export default function ForgotPasswordPage() {
               We&apos;ve sent a password reset link to your email address.
             </motion.p>
 
-            <motion.div
-              variants={itemVariants}
-              style={{
-                padding: '12px 16px',
-                borderRadius: 10,
-                border: '1px solid var(--border-dark)',
-                background: 'var(--surface-hint)',
-                marginBottom: 24,
-              }}
-            >
-              <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-tertiary)', margin: '0 0 6px' }}>
-                Demo — Test the reset flow
-              </p>
-              <Link
-                to="/reset-password?token=demo-reset-token"
-                style={{ fontSize: 13, color: 'var(--grad-1)', textDecoration: 'none', fontWeight: 500 }}
+            {emailFound && (
+              <motion.div
+                variants={itemVariants}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border-dark)',
+                  background: 'var(--surface-hint)',
+                  marginBottom: 24,
+                }}
               >
-                Click here to open the reset page →
-              </Link>
-            </motion.div>
+                <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-tertiary)', margin: '0 0 6px' }}>
+                  Demo — Test the reset flow
+                </p>
+                <Link
+                  to="/reset-password?token=demo-reset-token"
+                  style={{ fontSize: 13, color: 'var(--grad-1)', textDecoration: 'none', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  Click here to open the reset page
+                  <ArrowRight size={16} />
+                </Link>
+              </motion.div>
+            )}
 
             <motion.div variants={itemVariants} style={{ textAlign: 'center' }}>
-              <Link to="/login" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                ← Back to sign in
+              <Link to="/login" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <ArrowLeft size={16} />
+                Back to sign in
               </Link>
             </motion.div>
           </>
@@ -164,14 +170,15 @@ export default function ForgotPasswordPage() {
               </form>
             </Form>
 
-            <motion.p
+            <motion.div
               variants={itemVariants}
               style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', marginTop: 24, marginBottom: 0 }}
             >
-              <Link to="/login" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                ← Back to sign in
+              <Link to="/login" style={{ color: 'var(--text-secondary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <ArrowLeft size={16} />
+                Back to sign in
               </Link>
-            </motion.p>
+            </motion.div>
           </>
         )}
       </AuthCard>

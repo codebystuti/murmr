@@ -22,6 +22,21 @@
     <meta name="twitter:image" content="https://codebystuti.github.io/murmr/og-image.png" />
 
     <link rel="canonical" href="https://codebystuti.github.io/murmr/" />
+    <!-- Synchronously restore stored theme before first paint to prevent flash -->
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('murmr-theme');
+          if (raw) {
+            var stored = JSON.parse(raw);
+            var theme = stored && stored.state && stored.state.theme;
+            if (theme === 'light' || theme === 'dark') {
+              document.documentElement.setAttribute('data-theme', theme);
+            }
+          }
+        } catch (_) {}
+      })();
+    </script>
     <!-- spa-github-pages: decode redirect back into real history path -->
     <script>
       (function (l) {
