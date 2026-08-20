@@ -1,0 +1,1 @@
+import{r as s}from"./react-vendor-DfWV-_0e.js";import{u as t}from"./query-Bc6cKx7g.js";import"./index-DBLadwH7.js";import{u}from"./users-BuDtwWNO.js";function i(){const{data:r=[]}=t({queryKey:["users"],queryFn:u.list,staleTime:3e5});return s.useMemo(()=>new Map(r.map(e=>[e.id,e])),[r])}export{i as u};

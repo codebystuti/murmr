@@ -41,12 +41,27 @@
     <link rel="icon" type="image/svg+xml" href="/murmr/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Non-blocking font load: media=print prevents render-blocking; onload flips to all -->
     <link
       href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
-    <script type="module" crossorigin src="/murmr/assets/index-BcYtKa_L.js"></script>
-    <link rel="stylesheet" crossorigin href="/murmr/assets/index-DI4y_Rld.css">
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
+    <script type="module" crossorigin src="/murmr/assets/index-DBLadwH7.js"></script>
+    <link rel="modulepreload" crossorigin href="/murmr/assets/react-vendor-DfWV-_0e.js">
+    <link rel="modulepreload" crossorigin href="/murmr/assets/router-Bg6kNcfP.js">
+    <link rel="modulepreload" crossorigin href="/murmr/assets/query-Bc6cKx7g.js">
+    <link rel="modulepreload" crossorigin href="/murmr/assets/ui---OpGg2D.js">
+    <link rel="modulepreload" crossorigin href="/murmr/assets/forms-DYkAsK85.js">
+    <link rel="modulepreload" crossorigin href="/murmr/assets/animation-CyQTXO9I.js">
+    <link rel="stylesheet" crossorigin href="/murmr/assets/index-DGnGJlfm.css">
   </head>
   <body>
     <div id="root"></div>
