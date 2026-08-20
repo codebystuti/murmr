@@ -1,1 +1,0 @@
-import{u as s}from"./query-Bc6cKx7g.js";import{d as r,S as a}from"./index-DBLadwH7.js";const i={async list(t=60){await r(100);const e=localStorage.getItem(a.ACTIVITY);return(e?JSON.parse(e):[]).slice(0,t)}};function u(t=60){return s({queryKey:["activity",t],queryFn:()=>i.list(t),staleTime:0,refetchOnWindowFocus:!0})}export{u};
