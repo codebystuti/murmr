@@ -352,7 +352,7 @@ export default function ProfilePage() {
           <motion.div
             initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: shouldReduceMotion ? 0.01 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: shouldReduceMotion ? 0.01 : 0.5, ease: [0.16, 1, 0.3, 1] }}
             style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, padding: 24, borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)' }}
           >
             {/* Avatar */}
@@ -466,8 +466,8 @@ export default function ProfilePage() {
             })}
           </div>
 
-          {/* Tab content — only mounts the active panel */}
-          <AnimatePresence mode="wait">
+          {/* Tab content — sync mode crossfades in/out simultaneously, no dark gap */}
+          <AnimatePresence mode="sync">
             {activeTab === 'posts' && (
               <motion.div key="posts" {...tabMotion}>
                 {postsLoading ? (

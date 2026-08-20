@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -82,8 +82,9 @@ export default function ResetPasswordPage() {
             </motion.p>
 
             <motion.div variants={itemVariants} style={{ textAlign: 'center' }}>
-              <Link to="/forgot-password" style={{ fontSize: 13, color: 'var(--grad-1)', textDecoration: 'none', fontWeight: 500 }}>
-                Request a new reset link →
+              <Link to="/forgot-password" style={{ fontSize: 13, color: 'var(--grad-1)', textDecoration: 'none', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                Request a new reset link
+                <ArrowRight size={16} />
               </Link>
             </motion.div>
           </>
