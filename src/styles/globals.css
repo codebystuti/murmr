@@ -573,6 +573,19 @@ html .marketing-root .cta-ghost:hover {
 }
 .auth-forgot-link:hover { color: var(--text-primary); }
 
+/* ── Footer attribution link ─────────────────────────────────── */
+.footer-attr-link {
+  text-decoration: none;
+  border-radius: 3px;
+  outline: none;
+  transition: filter var(--dur-ui) ease;
+}
+.footer-attr-link:hover { filter: brightness(1.25); }
+.footer-attr-link:focus-visible {
+  outline: 2px solid var(--grad-1);
+  outline-offset: 2px;
+}
+
 /* ── Focus ring utilities (replaces onFocus/onBlur DOM mutations) ── */
 .focus-ring { outline: none; }
 .focus-ring:focus-visible { box-shadow: 0 0 0 2px var(--grad-1); }

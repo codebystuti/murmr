@@ -122,7 +122,18 @@ export default function CTAFooter() {
               fontFamily: 'var(--font-mono)',
             }}
           >
-            © 2026 Murmr · Built with care
+            © 2026 Murmr · Built with{' '}
+            <span aria-hidden="true">♥</span>
+            <span className="sr-only">love</span>
+            {' '}by{' '}
+            <a
+              href="https://github.com/codebystuti"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="grad-text footer-attr-link"
+            >
+              codebystuti
+            </a>
           </p>
           <div style={{ display: 'flex', gap: 16 }}>
             {['Privacy', 'Terms'].map((l) => (
