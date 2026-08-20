@@ -14,40 +14,41 @@ There is no backend. A localStorage-backed mock API layer mirrors a real REST in
 
 ## File structure
 
+```
 murmr/
-├── public/ # favicon, OG image, SPA 404 redirect
+├── public/                     # favicon, OG image, SPA 404 redirect
 ├── src/
-│ ├── components/
-│ │ ├── layout/ # AppLayout, MarketingLayout, Sidebar, Topbar
-│ │ ├── shared/ # CommandPalette, ErrorBoundary, RouteErrorFallback,
-│ │ │ # SubmitFeedbackModal, ThemeToggle, Logo
-│ │ └── ui/ # shadcn/ui primitives
-│ ├── features/
-│ │ ├── auth/ # Zustand auth store (+ test), login/signup components
-│ │ ├── posts/ # PostCard (+ test), upvote, mutations, hooks, types
-│ │ ├── comments/ # Comment CRUD components and hooks
-│ │ ├── boards/ # Board hooks
-│ │ ├── changelog/ # Changelog hooks
-│ │ ├── activity/ # Activity feed hooks
-│ │ └── users/ # User update hooks
-│ ├── hooks/ # useDebounce (+ test), usePasswordStrength (+ test),
-│ │ # useAuth, useReducedMotion, useMediaQuery, useClickOutside…
-│ ├── lib/
-│ │ ├── api/ # localStorage mock API — the swappable backend seam
-│ │ ├── authorization.ts # Role + ownership permission helpers
-│ │ ├── activity-simulator.ts # Tab-visibility-aware live event generator
-│ │ ├── seed.ts # Initial mock data
-│ │ ├── lenis.ts, queryClient.ts, theme-store.ts, ui-store.ts, utils.ts
-│ ├── marketing/components/ # Hero, CinematicSection, FeatureGrid, InTheFieldSection,
-│ │ # CTAFooter, Particles, AppMockups, Nav, SectionHeader
-│ ├── pages/ # Board, PostDetail, Roadmap, Changelog, Dashboard,
-│ │ # Profile, Settings, Activity, Login, Signup, password reset flow
-│ ├── routes/ # Route tree, ProtectedRoute
-│ ├── styles/ # globals.css (design tokens), gradients.css
-│ └── test/ # Vitest setup
-├── DESIGN-SYSTEM.md # Token architecture, component standards, anti-patterns
-└── vite.config.ts # Base path, manual vendor chunk splitting
-
+│   ├── components/
+│   │   ├── layout/             # AppLayout, MarketingLayout, Sidebar, Topbar
+│   │   ├── shared/             # CommandPalette, ErrorBoundary, RouteErrorFallback,
+│   │   │                       #   SubmitFeedbackModal, ThemeToggle, Logo
+│   │   └── ui/                 # shadcn/ui primitives
+│   ├── features/
+│   │   ├── auth/               # Zustand auth store (+ test), login/signup components
+│   │   ├── posts/              # PostCard (+ test), upvote, mutations, hooks, types
+│   │   ├── comments/           # Comment CRUD components and hooks
+│   │   ├── boards/             # Board hooks
+│   │   ├── changelog/          # Changelog hooks
+│   │   ├── activity/           # Activity feed hooks
+│   │   └── users/              # User update hooks
+│   ├── hooks/                  # useDebounce, usePasswordStrength, useAuth,
+│   │                           #   useReducedMotion, useMediaQuery, useClickOutside…
+│   ├── lib/
+│   │   ├── api/                # localStorage mock API — the swappable backend seam
+│   │   ├── authorization.ts    # Role + ownership permission helpers
+│   │   ├── activity-simulator.ts  # Tab-visibility-aware live event generator
+│   │   ├── seed.ts             # Initial mock data
+│   │   └── lenis.ts, queryClient.ts, theme-store.ts, ui-store.ts, utils.ts
+│   ├── marketing/components/   # Hero, CinematicSection, FeatureGrid, InTheFieldSection,
+│   │                           #   CTAFooter, Particles, AppMockups, Nav, SectionHeader
+│   ├── pages/                  # Board, PostDetail, Roadmap, Changelog, Dashboard,
+│   │                           #   Profile, Settings, Activity, Login, Signup, reset flow
+│   ├── routes/                 # Route tree, ProtectedRoute
+│   ├── styles/                 # globals.css (design tokens), gradients.css
+│   └── test/                   # Vitest setup
+├── DESIGN-SYSTEM.md            # Token architecture, component standards, anti-patterns
+└── vite.config.ts             # Base path, manual vendor chunk splitting
+```
 
 ## Features
 
