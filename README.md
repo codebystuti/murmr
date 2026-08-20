@@ -95,8 +95,8 @@ Every interactive element is keyboard reachable with a visible focus ring. Menus
 Vitest + React Testing Library — focused unit tests on the debounce hook, password-strength scoring, PostCard rendering, signup validation, and the auth store.
 
 ```
-npm run test:run # single pass
-npm run test # watch mode
+npm run test:run      # single pass
+npm run test          # watch mode
 npm run test:coverage # coverage report
 ```
 ## Running locally
