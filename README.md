@@ -99,17 +99,17 @@ npm run test:run # single pass
 npm run test # watch mode
 npm run test:coverage # coverage report
 ```
-
 ## Running locally
-
+```
 npm install
 npm run dev
+```
 
 Production build and preview:
-
+```
 npm run build
 npm run preview
-
+```
 ## Roadmap
 
 A Supabase backend for multi-user persistence and real-time sync. The API layer in `src/lib/api/` is isolated behind a REST-shaped interface specifically so this swap stays contained — feature components and hooks are backend-agnostic.
