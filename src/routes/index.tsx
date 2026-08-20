@@ -53,16 +53,18 @@ function PageFallback() {
 export default function AppRouter() {
   return (
     <Suspense fallback={<PageFallback />}>
-      <Routes>
-        {/* Marketing / auth routes */}
-        <Route element={<MarketingLayout />}>
-          <Route index element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/reset-success" element={<ResetSuccessPage />} />
-        </Route>
+      {/* Top-level boundary: catches anything the per-section boundaries miss */}
+      <ErrorBoundary>
+        <Routes>
+          {/* Marketing / auth routes — boundary isolates landing/auth crashes from the app */}
+          <Route element={<ErrorBoundary><MarketingLayout /></ErrorBoundary>}>
+            <Route index element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/reset-success" element={<ResetSuccessPage />} />
+          </Route>
 
         {/* Protected app routes */}
         <Route
@@ -85,6 +87,7 @@ export default function AppRouter() {
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </ErrorBoundary>
     </Suspense>
   );
 }

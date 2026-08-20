@@ -38,6 +38,16 @@ Every value in the codebase resolves through a CSS custom property. No hardcoded
 
 `--text-primary`, `--text-secondary`, `--text-tertiary` — the `:root` text scale. `--tx`, `--tx2`, `--tx3` — the `[data-theme]` equivalents for app components. Build hierarchy with these rather than with color.
 
+Contrast ratios against each theme's base background (WCAG AA requires 4.5:1 for text ≤ 18px):
+
+| Token | Dark value | Dark ratio | Light value | Light ratio |
+|---|---|---|---|---|
+| primary / `--tx` | `#F4F2FA` | 19.7:1 | `#0F0E1A` | 18.5:1 |
+| secondary / `--tx2` | `#A8A2BD` | 8.2:1 | `#5C5870` | 6.5:1 |
+| tertiary / `--tx3` | `#9790AC` | 6.6:1 | `#72698A` | 4.9:1 |
+
+The tertiary token was raised in both themes (from `#6B6580` / `#8C879F`) to meet WCAG AA. Use `--text-tertiary` / `--tx3` for timestamps, metadata, helper text, and secondary counts — not for anything that carries primary meaning.
+
 `--text-on-gradient` — the text color for content placed directly on a gradient surface (buttons, badges). Stays light regardless of theme because gradient surfaces are always dark.
 
 `--surface-hint` — 2% of `--text-on-gradient` mixed into transparent. Used as the default secondary CTA background on the marketing site, where it appears as a nearly transparent dark fill against the dark page. See the Buttons section for why this differs in the app.

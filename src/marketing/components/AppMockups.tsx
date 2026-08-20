@@ -122,6 +122,7 @@ function PostRow({
 export function BoardMock() {
   return (
     <div
+      aria-hidden="true"
       style={{
         background: 'var(--bg-base)',
         border: `1px solid var(--border-dark)`,
@@ -223,6 +224,7 @@ export function RoadmapMock() {
 
   return (
     <div
+      aria-hidden="true"
       style={{
         background: 'var(--bg-base)',
         border: `1px solid var(--border-dark)`,
@@ -284,6 +286,7 @@ export function ChangelogMock() {
 
   return (
     <div
+      aria-hidden="true"
       style={{
         background: 'var(--bg-base)',
         border: `1px solid var(--border-dark)`,
@@ -375,6 +378,7 @@ export function DashboardMock() {
 
   return (
     <div
+      aria-hidden="true"
       style={{
         background: 'var(--bg-base)',
         border: `1px solid var(--border-dark)`,

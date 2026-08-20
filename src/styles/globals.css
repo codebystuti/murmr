@@ -11,7 +11,7 @@
   --border-strong:  #3A3650;
   --text-primary:   #F4F2FA;
   --text-secondary: #A8A2BD;
-  --text-tertiary:  #6B6580;
+  --text-tertiary:  #9790AC; /* raised from #6B6580 (3.62:1) → 6.60:1 against #08070D, meets WCAG AA */
 
   /* Brand gradient — Aurora (locked) */
   --grad-1: #8B5CF6;
@@ -86,7 +86,7 @@
   --border-2: #3A3650;
   --tx:      #F4F2FA;
   --tx2:     #A8A2BD;
-  --tx3:     #6B6580;
+  --tx3:     #9790AC; /* mirrors --text-tertiary; 6.60:1 on #08070D */
   --shadow:  0 12px 40px -10px rgba(0, 0, 0, 0.5);
 }
 
@@ -98,7 +98,7 @@
   --border-2: #CFCBDE;
   --tx:      #0F0E1A;
   --tx2:     #5C5870;
-  --tx3:     #8C879F;
+  --tx3:     #72698A; /* raised from #8C879F (3.31:1) → 4.91:1 on #FAFAFC, meets WCAG AA */
   --shadow:  0 12px 40px -10px rgba(15, 14, 26, 0.08);
 }
 

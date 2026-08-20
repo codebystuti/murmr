@@ -21,7 +21,8 @@ export function Particles({ density = 60 }: { density?: number }) {
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    let raf = 0;
+    let raf: number | null = null;
+    let animating = false;
     let particles: Particle[] = [];
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
@@ -72,14 +73,48 @@ export function Particles({ density = 60 }: { density?: number }) {
         ctx.fill();
       }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      if (!reduced) raf = requestAnimationFrame(draw);
+      // Only reschedule while the loop is active (stopped by IntersectionObserver when offscreen)
+      if (animating && !reduced) raf = requestAnimationFrame(draw);
+    };
+
+    const startLoop = () => {
+      // No-op for reduced-motion or if already running
+      if (reduced || animating) return;
+      animating = true;
+      raf = requestAnimationFrame(draw);
+    };
+
+    const stopLoop = () => {
+      animating = false;
+      if (raf !== null) {
+        cancelAnimationFrame(raf);
+        raf = null;
+      }
     };
 
     resize();
+    // Render one static frame immediately so the canvas is never blank before
+    // the IntersectionObserver fires (which happens on the next microtask).
+    // For reduced-motion this is also the only frame ever drawn.
     draw();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          startLoop();
+        } else {
+          stopLoop();
+        }
+      },
+      { threshold: 0 },
+    );
+    observer.observe(canvas);
+
     window.addEventListener('resize', resize);
+
     return () => {
-      cancelAnimationFrame(raf);
+      stopLoop();
+      observer.disconnect();
       window.removeEventListener('resize', resize);
     };
   }, [density]);

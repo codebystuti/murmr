@@ -27,7 +27,7 @@ export default function SignupPage() {
   const login = useAuthStore((s) => s.login);
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<FormData>({ resolver: zodResolver(schema) });
+  const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { name: '', email: '', password: '' } });
   const password = form.watch('password', '');
 
   async function onSubmit(data: FormData) {
@@ -70,7 +70,7 @@ export default function SignupPage() {
         </motion.p>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'contents' }}>
+          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'contents' }} noValidate>
             <motion.div variants={itemVariants}>
               <FormField
                 control={form.control}
