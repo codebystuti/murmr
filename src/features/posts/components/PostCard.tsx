@@ -14,7 +14,7 @@ interface PostCardProps {
 export function PostCard({ post, author, postId }: PostCardProps) {
   return (
     <article
-      className="bg-[var(--surface)] border border-[var(--border)] rounded-xl hover:bg-[var(--elev)] hover:border-[var(--border-2)] hover:[box-shadow:var(--shadow)] focus-within:bg-[var(--elev)] focus-within:border-[var(--border-2)]"
+      className="bg-[var(--surface)] border border-[var(--border)] rounded-xl hover:bg-[var(--elev)] hover:border-[var(--border-2)] hover:[box-shadow:var(--shadow)] hover:translate-y-[-2px] active:scale-[0.98] focus-within:bg-[var(--elev)] focus-within:border-[var(--border-2)]"
       style={{
         position: 'relative',
         display: 'flex',

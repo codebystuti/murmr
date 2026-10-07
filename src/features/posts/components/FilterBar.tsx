@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
 import type { StatusFilter, SortOption } from '@/features/posts/types';
 
 const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
@@ -20,13 +21,16 @@ const SORT_OPTIONS: { key: SortOption; label: string }[] = [
 interface FilterBarProps {
   status: StatusFilter;
   sort: SortOption;
+  search: string;
   onStatusChange: (status: StatusFilter) => void;
   onSortChange: (sort: SortOption) => void;
+  onSearchChange: (q: string) => void;
   statusCounts?: Record<StatusFilter, number>;
 }
 
-export function FilterBar({ status, sort, onStatusChange, onSortChange, statusCounts }: FilterBarProps) {
+export function FilterBar({ status, sort, search, onStatusChange, onSortChange, onSearchChange, statusCounts }: FilterBarProps) {
   const currentSortLabel = SORT_OPTIONS.find((o) => o.key === sort)?.label ?? 'Sort';
+  const [sortOpen, setSortOpen] = useState(false);
 
   return (
     <div
@@ -90,8 +94,65 @@ export function FilterBar({ status, sort, onStatusChange, onSortChange, statusCo
         })}
       </div>
 
+      {/* Inline search input */}
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 7,
+          padding: '7px 12px',
+          borderRadius: 8,
+          border: '1px solid var(--border)',
+          background: 'var(--surface)',
+          minWidth: 180,
+          flexShrink: 0,
+          transition: 'border-color var(--dur-ui)',
+        }}
+        className="has-[:focus]:border-[var(--border-2)]"
+      >
+        <Search size={13} style={{ color: 'var(--tx3)', flexShrink: 0 }} aria-hidden="true" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search posts…"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            fontSize: 12,
+            color: 'var(--tx)',
+            flex: 1,
+            fontFamily: 'var(--font-body)',
+            minWidth: 0,
+          }}
+        />
+        {search.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onSearchChange('')}
+            aria-label="Clear search"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              color: 'var(--tx3)',
+              flexShrink: 0,
+              borderRadius: 4,
+            }}
+            className="hover:text-[var(--tx)]"
+          >
+            <X size={12} />
+          </button>
+        )}
+      </div>
+
       {/* Sort — custom dropdown replacing native <select> */}
-      <DropdownMenu.Root>
+      <DropdownMenu.Root open={sortOpen} onOpenChange={setSortOpen}>
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
@@ -117,7 +178,15 @@ export function FilterBar({ status, sort, onStatusChange, onSortChange, statusCo
           >
             <span style={{ color: 'var(--tx3)', fontWeight: 400 }}>Sort:</span>
             <span style={{ color: 'var(--tx)', fontWeight: 600 }}>{currentSortLabel}</span>
-            <ChevronDown size={12} style={{ color: 'var(--tx3)' }} aria-hidden="true" />
+            <ChevronDown
+              size={12}
+              aria-hidden="true"
+              style={{
+                color: 'var(--tx3)',
+                transform: sortOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: `transform var(--dur-ui)`,
+              }}
+            />
           </button>
         </DropdownMenu.Trigger>
 
@@ -125,6 +194,7 @@ export function FilterBar({ status, sort, onStatusChange, onSortChange, statusCo
           <DropdownMenu.Content
             align="end"
             sideOffset={6}
+            className="sort-menu-content"
             style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
@@ -134,6 +204,7 @@ export function FilterBar({ status, sort, onStatusChange, onSortChange, statusCo
               minWidth: 160,
               zIndex: 50,
               outline: 'none',
+              transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)',
             }}
           >
             {SORT_OPTIONS.map((o) => {
@@ -142,7 +213,7 @@ export function FilterBar({ status, sort, onStatusChange, onSortChange, statusCo
                 <DropdownMenu.Item
                   key={o.key}
                   onSelect={() => onSortChange(o.key)}
-                  className="data-[highlighted]:bg-[var(--elev)] data-[highlighted]:text-[var(--tx)] focus:outline-none"
+                  className="data-[highlighted]:bg-[color-mix(in_oklab,var(--grad-1)_15%,transparent)] data-[highlighted]:text-[var(--tx)] focus:outline-none"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
