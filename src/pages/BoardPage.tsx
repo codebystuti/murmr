@@ -17,6 +17,7 @@ import type { Post, PostStatus } from '@/types';
 export default function BoardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [submitOpen, setSubmitOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const shouldReduceMotion = useReducedMotion();
 
   const boardSlug = searchParams.get('board') ?? 'all';
@@ -39,6 +40,14 @@ export default function BoardPage() {
     let result: Post[] = allPosts;
     if (statusFilter !== 'all') {
       result = result.filter((p) => p.status === (statusFilter as PostStatus));
+    }
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          (p.body && p.body.toLowerCase().includes(q)),
+      );
     }
     return [...result].sort((a, b) => {
       if (sort === 'newest') {
@@ -77,7 +86,7 @@ export default function BoardPage() {
 
   const currentBoard = boards.find((b) => b.slug === boardSlug);
   const uniqueContributors = new Set(allPosts.map((p) => p.authorId)).size;
-  const isFiltered = statusFilter !== 'all';
+  const isFiltered = statusFilter !== 'all' || searchTerm.trim() !== '';
 
   const isLoading = boardsLoading || postsLoading;
 
@@ -152,8 +161,10 @@ export default function BoardPage() {
       <FilterBar
         status={statusFilter}
         sort={sort}
+        search={searchTerm}
         onStatusChange={(s) => setParam('status', s)}
         onSortChange={(s) => setParam('sort', s)}
+        onSearchChange={setSearchTerm}
         statusCounts={statusCounts}
       />
 
@@ -225,9 +236,9 @@ export default function BoardPage() {
                   variant="default"
                   size="sm"
                   style={{ marginTop: 4 }}
-                  onClick={() => setParam('status', 'all')}
+                  onClick={() => { setParam('status', 'all'); setSearchTerm(''); }}
                 >
-                  Clear filter
+                  Clear filters
                 </Button>
               </>
             ) : (
@@ -265,10 +276,10 @@ export default function BoardPage() {
                   key={post.id}
                   initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.98 }}
+                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.98, transition: { duration: 0.18, ease: 'easeIn' } }}
                   transition={{
-                    duration: shouldReduceMotion ? 0.1 : 0.4,
-                    delay: shouldReduceMotion ? 0 : Math.min(index * 0.08, 0.48),
+                    duration: shouldReduceMotion ? 0.1 : 0.6,
+                    delay: shouldReduceMotion ? 0 : Math.min(index * 0.1, 0.6),
                     ease: [0.16, 1, 0.3, 1],
                   }}
                 >
