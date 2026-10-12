@@ -1,8 +1,9 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import MarketingLayout from '@/components/layout/MarketingLayout';
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from './ProtectedRoute';
+import GuestRoute from './GuestRoute';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 // Landing page lazy — rich animations, own chunk
@@ -24,6 +25,7 @@ const ChangelogPage = lazy(() => import('@/pages/ChangelogPage'));
 const ActivityPage = lazy(() => import('@/pages/ActivityPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 function PageFallback() {
   return (
@@ -59,11 +61,11 @@ export default function AppRouter() {
           {/* Marketing / auth routes — boundary isolates landing/auth crashes from the app */}
           <Route element={<ErrorBoundary><MarketingLayout /></ErrorBoundary>}>
             <Route index element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/reset-success" element={<ResetSuccessPage />} />
+            <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+            <Route path="/signup" element={<GuestRoute><SignupPage /></GuestRoute>} />
+            <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+            <Route path="/reset-password" element={<GuestRoute><ResetPasswordPage /></GuestRoute>} />
+            <Route path="/reset-success" element={<GuestRoute><ResetSuccessPage /></GuestRoute>} />
           </Route>
 
         {/* Protected app routes */}
@@ -84,8 +86,8 @@ export default function AppRouter() {
           <Route path="/app/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
         </Route>
 
-        {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* 404 */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </ErrorBoundary>
     </Suspense>

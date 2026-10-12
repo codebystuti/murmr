@@ -57,7 +57,7 @@ export default function PostDetailPage() {
   function handleDelete() {
     if (!postId) return;
     deletePost(postId, {
-      onSuccess: () => navigate(-1),
+      onSuccess: () => navigate('/app/board', { replace: true }),
     });
   }
 

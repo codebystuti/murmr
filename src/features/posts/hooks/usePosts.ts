@@ -13,7 +13,7 @@ export function usePost(id: string) {
   return useQuery({
     queryKey: ['post', id],
     queryFn: () => postsApi.get(id),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30_000,
     enabled: !!id,
   });
 }

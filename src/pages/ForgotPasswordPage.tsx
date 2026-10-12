@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { CheckCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { AuthPageLayout } from '@/features/auth/components/AuthPageLayout';
 import { AuthCard, itemVariants } from '@/features/auth/components/AuthCard';
@@ -28,6 +29,8 @@ export default function ForgotPasswordPage() {
       const { found } = await authApi.forgotPassword(data.email);
       setEmailFound(found);
       setSent(true);
+    } catch {
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }

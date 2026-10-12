@@ -54,6 +54,11 @@ export const postsApi = {
   async remove(id: string): Promise<void> {
     await delay(400);
     savePosts(getPosts().filter((p) => p.id !== id));
+    const commentsRaw = localStorage.getItem(STORAGE_KEYS.COMMENTS);
+    if (commentsRaw) {
+      const comments = JSON.parse(commentsRaw);
+      localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(comments.filter((c: { postId: string }) => c.postId !== id)));
+    }
   },
 
   async toggleUpvote(postId: string, userId: string): Promise<Post> {

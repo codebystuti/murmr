@@ -101,7 +101,9 @@ export function CommentInput({ postId, currentUser }: CommentInputProps) {
             marginTop: 8,
           }}
         >
-          <span style={{ fontSize: 11, color: 'var(--tx3)' }}>⌘Enter to post</span>
+          <span style={{ fontSize: 11, color: 'var(--tx3)', fontFamily: 'var(--font-mono)' }}>
+            {navigator.platform?.includes('Mac') ? '⌘' : 'Ctrl+'}Enter
+          </span>
 
           <button
             type="button"

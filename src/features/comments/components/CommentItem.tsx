@@ -305,7 +305,7 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
               </button>
             </div>
             <p style={{ fontSize: 10, color: 'var(--tx3)', margin: 0 }}>
-              ⌘Enter to save · Esc to cancel
+              {/Mac|iPhone|iPad/.test(navigator.platform ?? '') ? '⌘' : 'Ctrl+'}Enter to save · Esc to cancel
             </p>
           </div>
         ) : (

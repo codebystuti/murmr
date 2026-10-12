@@ -58,7 +58,7 @@ export default function BoardPage() {
       }
       return b.upvotes - a.upvotes; // default: most upvoted
     });
-  }, [allPosts, statusFilter, sort]);
+  }, [allPosts, statusFilter, sort, searchTerm]);
 
   // Count per status for filter pill badges
   const statusCounts = useMemo(() => {
