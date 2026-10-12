@@ -1,12 +1,12 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { CommandPalette } from '@/components/shared/CommandPalette';
 import { startActivitySimulator, stopActivitySimulator } from '@/lib/activity-simulator';
-import { useThemeStore } from '@/lib/theme-store';
 
 export default function AppLayout() {
-  const { theme } = useThemeStore();
+  const location = useLocation();
 
   useEffect(() => {
     startActivitySimulator();
@@ -15,7 +15,6 @@ export default function AppLayout() {
 
   return (
     <div
-      data-theme={theme}
       style={{
         display: 'flex',
         height: '100vh',
@@ -27,7 +26,15 @@ export default function AppLayout() {
     >
       <Sidebar />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Outlet />
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        >
+          <Outlet />
+        </motion.div>
       </main>
       <CommandPalette />
     </div>

@@ -33,7 +33,7 @@ function PageFallback() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--bg-base)',
+        background: 'var(--bg)',
       }}
     >
       <div

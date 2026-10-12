@@ -105,35 +105,35 @@
 /* ── Theme transition — smooth color changes on toggle ───────────── */
 [data-theme] {
   transition:
-    background-color var(--dur-medium) ease-out,
-    color var(--dur-medium) ease-out,
-    border-color var(--dur-medium) ease-out;
+    background-color 500ms ease-out,
+    color 500ms ease-out,
+    border-color 500ms ease-out;
 }
 
 [data-theme] *,
 [data-theme] *::before,
 [data-theme] *::after {
   transition:
-    background-color var(--dur-medium) ease-out,
-    color var(--dur-medium) ease-out,
-    border-color var(--dur-medium) ease-out,
-    fill var(--dur-medium) ease-out,
-    stroke var(--dur-medium) ease-out;
+    background-color 500ms ease-out,
+    color 500ms ease-out,
+    border-color 500ms ease-out,
+    fill 500ms ease-out,
+    stroke 500ms ease-out;
 }
 
 /* Applied during toggle to force every element — including those with inline
-   transition:all styles — to use the same 300ms duration. Removed after the
+   transition:all styles — to use the same 500ms duration. Removed after the
    transition completes. The !important is intentional: it must win over inline styles. */
 .theme-transitioning,
 .theme-transitioning *,
 .theme-transitioning *::before,
 .theme-transitioning *::after {
   transition:
-    background-color 300ms ease-out !important,
-    color 300ms ease-out !important,
-    border-color 300ms ease-out !important,
-    fill 300ms ease-out !important,
-    stroke 300ms ease-out !important;
+    background-color 500ms ease-out !important,
+    color 500ms ease-out !important,
+    border-color 500ms ease-out !important,
+    fill 500ms ease-out !important,
+    stroke 500ms ease-out !important;
 }
 
 /* ── Base resets ────────────────────────────────────────────────── */

@@ -20,13 +20,13 @@ export const useThemeStore = create<ThemeStore>()(
           const next = s.theme === 'dark' ? 'light' : 'dark';
           // Apply the attribute synchronously so CSS transitions fire immediately
           document.documentElement.setAttribute('data-theme', next);
-          // Force all elements onto the same 300ms timing, overriding inline styles
+          // Force all elements onto the same 500ms timing, overriding inline styles
           document.documentElement.classList.add('theme-transitioning');
           if (transitionTimer !== null) clearTimeout(transitionTimer);
           transitionTimer = setTimeout(() => {
             document.documentElement.classList.remove('theme-transitioning');
             transitionTimer = null;
-          }, 350);
+          }, 550);
           return { theme: next };
         });
       },
