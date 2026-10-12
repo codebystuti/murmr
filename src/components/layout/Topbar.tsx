@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
 import { useUIStore } from '@/lib/ui-store';
+import { useMediaQuery } from '@/hooks';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 interface TopbarProps {
@@ -10,7 +11,8 @@ interface TopbarProps {
 }
 
 export function Topbar({ title, sub, action }: TopbarProps) {
-  const { setCommandPaletteOpen } = useUIStore();
+  const { setCommandPaletteOpen, setSidebarOpen } = useUIStore();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   return (
     <div
@@ -22,18 +24,45 @@ export function Topbar({ title, sub, action }: TopbarProps) {
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg)',
         flexShrink: 0,
+        gap: 12,
       }}
     >
-      <div>
-        <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--tx)' }}>
-          {title}
-        </div>
-        {sub && (
-          <div style={{ fontSize: 13, color: 'var(--tx2)', marginTop: 2 }}>{sub}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+        {!isDesktop && (
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+              background: 'transparent',
+              color: 'var(--tx2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'all var(--dur-ui)',
+            }}
+            className="hover:bg-[var(--elev)] hover:text-[var(--tx)]"
+          >
+            <Menu size={18} />
+          </button>
         )}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--tx)' }}>
+            {title}
+          </div>
+          {sub && (
+            <div style={{ fontSize: 13, color: 'var(--tx2)', marginTop: 2 }}>{sub}</div>
+          )}
+        </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         {/* Search / command palette trigger */}
         <button
           onClick={() => setCommandPaletteOpen(true)}
@@ -48,7 +77,8 @@ export function Topbar({ title, sub, action }: TopbarProps) {
             background: 'var(--surface)',
             fontSize: 12,
             color: 'var(--tx2)',
-            minWidth: 220,
+            minWidth: 0,
+            maxWidth: 220,
             cursor: 'pointer',
             transition: 'border-color var(--dur-ui)',
           }}
@@ -57,6 +87,7 @@ export function Topbar({ title, sub, action }: TopbarProps) {
           <Search size={13} />
           <span className="hidden sm:block" style={{ flex: 1, textAlign: 'left' }}>Search…</span>
           <kbd
+            className="hidden sm:inline"
             style={{
               fontFamily: 'var(--font-mono)',
               fontSize: 10,
@@ -66,7 +97,7 @@ export function Topbar({ title, sub, action }: TopbarProps) {
               color: 'var(--tx3)',
             }}
           >
-            ⌘K
+            {/Mac|iPhone|iPad/.test(navigator.platform ?? '') ? '⌘' : 'Ctrl+'}K
           </kbd>
         </button>
 

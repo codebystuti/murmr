@@ -59,6 +59,7 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay
+          className="murmr-overlay"
           style={{
             position: 'fixed',
             inset: 0,
@@ -68,6 +69,7 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
           }}
         />
         <Dialog.Content
+          className="murmr-dialog"
           style={{
             position: 'fixed',
             top: '50%',

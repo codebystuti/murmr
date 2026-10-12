@@ -4,10 +4,14 @@ interface UIStore {
   commandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
   toggleCommandPalette: () => void;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>()((set) => ({
   commandPaletteOpen: false,
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
   toggleCommandPalette: () => set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
+  sidebarOpen: false,
+  setSidebarOpen: (open) => set({ sidebarOpen: open }),
 }));

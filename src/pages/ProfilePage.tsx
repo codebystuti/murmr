@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import type { ReactNode } from 'react';
 import { Pencil, MessageSquare, ChevronUp, X, Check, Loader2, FileText, MessageCircle } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Topbar } from '@/components/layout/Topbar';
@@ -35,6 +36,10 @@ interface EditProfileModalProps {
 function EditProfileModal({ open, onOpenChange, currentName, userId }: EditProfileModalProps) {
   const [name, setName] = useState(currentName);
   const { mutate: updateUser, isPending } = useUpdateUser();
+
+  useEffect(() => {
+    if (open) setName(currentName);
+  }, [open, currentName]);
   const shouldReduceMotion = useReducedMotion();
 
   const transition = shouldReduceMotion
@@ -333,12 +338,9 @@ export default function ProfilePage() {
 
   const postMap = useMemo(() => new Map(allPosts.map((p) => [p.id, p.title])), [allPosts]);
 
-  const tabMotion = {
-    initial: { opacity: 0, y: shouldReduceMotion ? 0 : 6 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: shouldReduceMotion ? 0 : -4 },
-    transition: { duration: shouldReduceMotion ? 0.01 : 0.18, ease: [0.16, 1, 0.3, 1] as const },
-  };
+  function TabPanel({ children }: { children: ReactNode }) {
+    return <div>{children}</div>;
+  }
 
   if (!user) return null;
 
@@ -466,68 +468,66 @@ export default function ProfilePage() {
             })}
           </div>
 
-          {/* Tab content — sync mode crossfades in/out simultaneously, no dark gap */}
-          <AnimatePresence mode="sync">
-            {activeTab === 'posts' && (
-              <motion.div key="posts" {...tabMotion}>
-                {postsLoading ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="animate-pulse" style={{ height: 64, borderRadius: 12, background: 'var(--surface)', opacity: 1 - i * 0.2 }} />
-                    ))}
-                  </div>
-                ) : myPosts.length === 0 ? (
-                  <EmptyTabState icon={<FileText size={20} style={{ color: 'var(--tx3)' }} />} label="No posts yet" sub="Your submitted posts will appear here." action={<Button variant="primary" size="sm" onClick={() => navigate('/app/board')}>Browse board</Button>} />
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {myPosts.map((post) => (
-                      <ProfilePostRow key={post.id} post={post} />
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
+          {/* Tab content */}
+          {activeTab === 'posts' && (
+            <TabPanel>
+              {postsLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="animate-pulse" style={{ height: 64, borderRadius: 12, background: 'var(--surface)', opacity: 1 - i * 0.2 }} />
+                  ))}
+                </div>
+              ) : myPosts.length === 0 ? (
+                <EmptyTabState icon={<FileText size={20} style={{ color: 'var(--tx3)' }} />} label="No posts yet" sub="Your submitted posts will appear here." action={<Button variant="primary" size="sm" onClick={() => navigate('/app/board')}>Browse board</Button>} />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {myPosts.map((post) => (
+                    <ProfilePostRow key={post.id} post={post} />
+                  ))}
+                </div>
+              )}
+            </TabPanel>
+          )}
 
-            {activeTab === 'comments' && (
-              <motion.div key="comments" {...tabMotion}>
-                {commentsLoading ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="animate-pulse" style={{ height: 56, borderRadius: 12, background: 'var(--surface)', opacity: 1 - i * 0.2 }} />
-                    ))}
-                  </div>
-                ) : myComments.length === 0 ? (
-                  <EmptyTabState icon={<MessageCircle size={20} style={{ color: 'var(--tx3)' }} />} label="No comments yet" sub="Comments you've left will appear here." />
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {myComments.map((comment) => (
-                      <ProfileCommentRow key={comment.id} comment={comment} postTitle={postMap.get(comment.postId)} currentUser={user} />
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
+          {activeTab === 'comments' && (
+            <TabPanel>
+              {commentsLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="animate-pulse" style={{ height: 56, borderRadius: 12, background: 'var(--surface)', opacity: 1 - i * 0.2 }} />
+                  ))}
+                </div>
+              ) : myComments.length === 0 ? (
+                <EmptyTabState icon={<MessageCircle size={20} style={{ color: 'var(--tx3)' }} />} label="No comments yet" sub="Comments you've left will appear here." />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {myComments.map((comment) => (
+                    <ProfileCommentRow key={comment.id} comment={comment} postTitle={postMap.get(comment.postId)} currentUser={user} />
+                  ))}
+                </div>
+              )}
+            </TabPanel>
+          )}
 
-            {activeTab === 'upvoted' && (
-              <motion.div key="upvoted" {...tabMotion}>
-                {postsLoading ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="animate-pulse" style={{ height: 64, borderRadius: 12, background: 'var(--surface)', opacity: 1 - i * 0.2 }} />
-                    ))}
-                  </div>
-                ) : upvotedPosts.length === 0 ? (
-                  <EmptyTabState icon={<ChevronUp size={20} style={{ color: 'var(--tx3)' }} />} label="No upvoted posts" sub="Posts you upvote will appear here." action={<Button variant="primary" size="sm" onClick={() => navigate('/app/board')}>Browse board</Button>} />
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {upvotedPosts.map((post) => (
-                      <ProfilePostRow key={post.id} post={post} />
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {activeTab === 'upvoted' && (
+            <TabPanel>
+              {postsLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="animate-pulse" style={{ height: 64, borderRadius: 12, background: 'var(--surface)', opacity: 1 - i * 0.2 }} />
+                  ))}
+                </div>
+              ) : upvotedPosts.length === 0 ? (
+                <EmptyTabState icon={<ChevronUp size={20} style={{ color: 'var(--tx3)' }} />} label="No upvoted posts" sub="Posts you upvote will appear here." action={<Button variant="primary" size="sm" onClick={() => navigate('/app/board')}>Browse board</Button>} />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {upvotedPosts.map((post) => (
+                    <ProfilePostRow key={post.id} post={post} />
+                  ))}
+                </div>
+              )}
+            </TabPanel>
+          )}
         </div>
       </div>
 

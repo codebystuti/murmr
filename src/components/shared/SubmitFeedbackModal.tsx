@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -134,11 +134,12 @@ export function SubmitFeedbackModal({
     mode: 'onTouched',
   });
 
-  // Seed boardId default once boards load
   const boardId = form.watch('boardId');
-  if (!boardId && boards.length > 0) {
-    form.setValue('boardId', defaultBoardId ?? boards[0].id);
-  }
+  useEffect(() => {
+    if (!boardId && boards.length > 0) {
+      form.setValue('boardId', defaultBoardId ?? boards[0].id);
+    }
+  }, [boardId, boards, defaultBoardId, form]);
 
   function handleClose() {
     onOpenChange(false);
@@ -188,6 +189,7 @@ export function SubmitFeedbackModal({
     <Dialog.Root open={open} onOpenChange={handleClose}>
       <Dialog.Portal>
         <Dialog.Overlay
+          className="murmr-overlay"
           style={{
             position: 'fixed',
             inset: 0,
@@ -197,6 +199,7 @@ export function SubmitFeedbackModal({
           }}
         />
         <Dialog.Content
+          className="murmr-dialog"
           style={{
             position: 'fixed',
             top: '50%',

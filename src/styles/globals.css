@@ -345,6 +345,49 @@ button {
   animation: murmr-menu-out 150ms ease-in forwards;
 }
 
+/* ── Dialog overlay + content animation ──────────────────────── */
+@keyframes murmr-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes murmr-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes murmr-dialog-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes murmr-dialog-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+}
+.murmr-overlay[data-state="open"]   { animation: murmr-overlay-in 200ms ease-out; }
+.murmr-overlay[data-state="closed"] { animation: murmr-overlay-out 150ms ease-in forwards; }
+.murmr-dialog[data-state="open"]    { animation: murmr-dialog-in 250ms cubic-bezier(0.16, 1, 0.3, 1); }
+.murmr-dialog[data-state="closed"]  { animation: murmr-dialog-out 150ms ease-in forwards; }
+
+/* ── Command palette animation ───────────────────────────────── */
+@keyframes murmr-palette-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.murmr-palette-panel {
+  animation: murmr-palette-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.murmr-palette-backdrop {
+  animation: murmr-overlay-in 150ms ease-out;
+}
+
+/* ── Mobile sidebar drawer animation ─────────────────────────── */
+@keyframes murmr-sidebar-in {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+.murmr-sidebar-drawer {
+  animation: murmr-sidebar-in 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* ── Orb rotation ────────────────────────────────────────────── */
 @keyframes orbSpin {
   from { transform: rotate(0deg); }
