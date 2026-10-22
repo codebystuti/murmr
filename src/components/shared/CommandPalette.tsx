@@ -16,9 +16,6 @@ const NAV_ITEMS = [
   { label: 'Go to Activity', icon: Activity, shortcut: 'G A', key: 'a', path: '/app/activity' },
 ];
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform ?? '');
-const modLabel = isMac ? '⌘' : 'Ctrl+';
-
 export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen } = useUIStore();
   const { theme, toggleTheme } = useThemeStore();

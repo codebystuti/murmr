@@ -1,5 +1,5 @@
 import seedData from './seed-data.json';
-import type { User, Board, Post, Comment, ChangelogEntry, ActivityEvent } from '@/types';
+import type { User, Board } from '@/types';
 
 const STORAGE_KEYS = {
   SEEDED: 'murmr:seeded',
