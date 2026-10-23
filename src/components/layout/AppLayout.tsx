@@ -1,14 +1,10 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useEffect } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { CommandPalette } from '@/components/shared/CommandPalette';
 import { startActivitySimulator, stopActivitySimulator } from '@/lib/activity-simulator';
 
 export default function AppLayout() {
-  const location = useLocation();
-  const shouldReduceMotion = useReducedMotion();
-
   useEffect(() => {
     startActivitySimulator();
     return () => stopActivitySimulator();
@@ -26,16 +22,8 @@ export default function AppLayout() {
       }}
     >
       <Sidebar />
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <motion.div
-          key={location.pathname}
-          initial={{ opacity: shouldReduceMotion ? 1 : 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: 'easeOut' }}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-        >
-          <Outlet />
-        </motion.div>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
+        <Outlet />
       </main>
       <CommandPalette />
     </div>

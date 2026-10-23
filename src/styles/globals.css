@@ -102,28 +102,7 @@
   --shadow:  0 12px 40px -10px rgba(15, 14, 26, 0.08);
 }
 
-/* ── Theme transition — smooth color changes on toggle ───────────── */
-[data-theme] {
-  transition:
-    background-color 500ms ease-out,
-    color 500ms ease-out,
-    border-color 500ms ease-out;
-}
-
-[data-theme] *,
-[data-theme] *::before,
-[data-theme] *::after {
-  transition:
-    background-color 500ms ease-out,
-    color 500ms ease-out,
-    border-color 500ms ease-out,
-    fill 500ms ease-out,
-    stroke 500ms ease-out;
-}
-
-/* Applied during toggle to force every element — including those with inline
-   transition:all styles — to use the same 500ms duration. Removed after the
-   transition completes. The !important is intentional: it must win over inline styles. */
+/* ── Theme transition — only active during toggle ──────────────── */
 .theme-transitioning,
 .theme-transitioning *,
 .theme-transitioning *::before,
@@ -162,6 +141,7 @@ body {
 
 #root {
   min-height: 100vh;
+  background-color: var(--bg);
 }
 
 button {
