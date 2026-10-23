@@ -1,0 +1,1 @@
+import{u as s}from"./query-Bc6cKx7g.js";import{e as r,S as a}from"./index-B8LCcJh0.js";const i={async list(e=60){await r(100);const t=localStorage.getItem(a.ACTIVITY);return(t?JSON.parse(t):[]).slice(0,e)}};function u(e=60){return s({queryKey:["activity",e],queryFn:()=>i.list(e),staleTime:0,refetchOnWindowFocus:!0})}export{u};
