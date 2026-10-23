@@ -184,7 +184,7 @@ export default function ChangelogPage() {
   const { data: entries = [], isLoading, error } = useChangelog();
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ flex: 1 }}>
+    <div className="flex flex-col overflow-hidden" style={{ flex: 1, background: 'var(--bg)' }}>
       <Topbar
         title="Changelog"
         sub={isLoading ? 'Loading…' : `${entries.length} releases`}
