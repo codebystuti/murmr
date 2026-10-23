@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Zap } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { useActivity } from '@/features/activity/hooks/useActivity';
@@ -25,10 +24,9 @@ const ACTION_COLOR: Record<ActivityEvent['action'], string> = {
   status_changed: 'var(--status-progress)',
 };
 
-function ActivityRow({ event, index }: { event: ActivityEvent; index: number }) {
+function ActivityRow({ event }: { event: ActivityEvent }) {
   const navigate = useNavigate();
   const userMap = useUserMap();
-  const shouldReduceMotion = useReducedMotion();
   const user = userMap.get(event.userId);
   const accentColor = ACTION_COLOR[event.action];
 
@@ -44,14 +42,7 @@ function ActivityRow({ event, index }: { event: ActivityEvent; index: number }) 
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{
-        duration: shouldReduceMotion ? 0.01 : 0.2,
-        delay: shouldReduceMotion ? 0 : Math.min(index * 0.05, 0.4),
-        ease: [0.16, 1, 0.3, 1],
-      }}
+    <div
       role="button"
       tabIndex={0}
       aria-label={`View post: ${event.targetTitle}`}
@@ -127,7 +118,7 @@ function ActivityRow({ event, index }: { event: ActivityEvent; index: number }) 
           marginTop: 6,
         }}
       />
-    </motion.div>
+    </div>
   );
 }
 
@@ -219,8 +210,8 @@ export default function ActivityPage() {
           </div>
         ) : (
           <div style={{ maxWidth: 680, margin: '0 auto', width: '100%' }}>
-            {events.map((event, i) => (
-              <ActivityRow key={event.id} event={event} index={i} />
+            {events.map((event) => (
+              <ActivityRow key={event.id} event={event} />
             ))}
           </div>
         )}

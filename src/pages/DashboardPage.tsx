@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   MessageSquare,
   TrendingUp,
@@ -45,23 +45,13 @@ interface StatCardProps {
   value: number | string;
   icon: React.ReactNode;
   accentColor: string;
-  index: number;
   onClick?: () => void;
 }
 
-function StatCard({ label, value, icon, accentColor, index, onClick }: StatCardProps) {
-  const shouldReduceMotion = useReducedMotion();
-
+function StatCard({ label, value, icon, accentColor, onClick }: StatCardProps) {
   return (
-    <motion.button
+    <button
       type="button"
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: shouldReduceMotion ? 0.01 : 0.5,
-        delay: shouldReduceMotion ? 0 : index * 0.08,
-        ease: [0.16, 1, 0.3, 1],
-      }}
       onClick={onClick}
       disabled={!onClick}
       className={`bg-[var(--surface)] border border-[var(--border)] rounded-xl text-left w-full ${onClick ? 'cursor-pointer hover:border-[var(--border-2)] hover:bg-[var(--elev)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]' : ''}`}
@@ -106,14 +96,13 @@ function StatCard({ label, value, icon, accentColor, index, onClick }: StatCardP
       >
         {typeof value === 'number' ? formatNumber(value) : value}
       </div>
-    </motion.button>
+    </button>
   );
 }
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const shouldReduceMotion = useReducedMotion();
   const [submitOpen, setSubmitOpen] = useState(false);
   const { data: allPosts = [], isLoading: postsLoading } = usePosts();
   const { data: recentActivity = [], isLoading: actLoading } = useActivity(10);
@@ -170,10 +159,10 @@ export default function DashboardPage() {
             ))
           ) : (
             <>
-              <StatCard label="Total posts" value={stats.totalPosts} icon={<TrendingUp size={15} />} accentColor="var(--grad-1)" index={0} onClick={() => navigate('/app/board')} />
-              <StatCard label="Total upvotes" value={stats.totalUpvotes} icon={<ChevronUp size={15} />} accentColor="var(--grad-2)" index={1} onClick={() => navigate('/app/board')} />
-              <StatCard label="Contributors" value={stats.contributors} icon={<Users size={15} />} accentColor="var(--grad-3)" index={2} onClick={() => navigate('/app/board')} />
-              <StatCard label="Shipped" value={stats.shippedCount} icon={<CheckCircle2 size={15} />} accentColor="var(--status-shipped)" index={3} onClick={() => navigate('/app/changelog')} />
+              <StatCard label="Total posts" value={stats.totalPosts} icon={<TrendingUp size={15} />} accentColor="var(--grad-1)" onClick={() => navigate('/app/board')} />
+              <StatCard label="Total upvotes" value={stats.totalUpvotes} icon={<ChevronUp size={15} />} accentColor="var(--grad-2)" onClick={() => navigate('/app/board')} />
+              <StatCard label="Contributors" value={stats.contributors} icon={<Users size={15} />} accentColor="var(--grad-3)" onClick={() => navigate('/app/board')} />
+              <StatCard label="Shipped" value={stats.shippedCount} icon={<CheckCircle2 size={15} />} accentColor="var(--status-shipped)" onClick={() => navigate('/app/changelog')} />
             </>
           )}
         </div>
@@ -206,15 +195,8 @@ export default function DashboardPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {trendingPosts.map((post, i) => (
-                  <motion.div
+                  <div
                     key={post.id}
-                    initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{
-                      duration: shouldReduceMotion ? 0.01 : 0.5,
-                      delay: shouldReduceMotion ? 0 : i * 0.08,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
                     role="button"
                     tabIndex={0}
                     aria-label={`View post: ${post.title}`}
@@ -280,7 +262,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             )}
@@ -394,9 +376,6 @@ export default function DashboardPage() {
         type="button"
         onClick={() => setSubmitOpen(true)}
         aria-label="New post"
-        initial={{ scale: shouldReduceMotion ? 1 : 0, opacity: shouldReduceMotion ? 1 : 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: shouldReduceMotion ? 0 : 0.4, type: 'spring', stiffness: 300, damping: 24 }}
         whileTap={{ scale: 0.93 }}
         className="sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] shadow-[0_8px_24px_color-mix(in_oklab,var(--grad-1)_40%,transparent)]"
         style={{

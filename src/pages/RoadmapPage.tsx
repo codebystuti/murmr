@@ -68,10 +68,10 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
   return (
     <motion.div
       layout={!shouldReduceMotion}
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.97 }}
-      transition={{ duration: shouldReduceMotion ? 0.01 : 0.35, ease: [0.16, 1, 0.3, 1] }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       role="button"
       tabIndex={0}
       aria-label={`Open post: ${post.title}`}
@@ -240,21 +240,11 @@ interface ColumnProps {
   posts: Post[];
   adminMode: boolean;
   userMap: Map<string, { name: string }>;
-  index: number;
 }
 
-function RoadmapColumn({ label, color, posts, adminMode, userMap, index }: ColumnProps) {
-  const shouldReduceMotion = useReducedMotion();
-
+function RoadmapColumn({ label, color, posts, adminMode, userMap }: ColumnProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: shouldReduceMotion ? 0.01 : 0.5,
-        delay: shouldReduceMotion ? 0 : index * 0.1,
-        ease: [0.16, 1, 0.3, 1],
-      }}
+    <div
       style={{ flex: '1 1 0', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 8 }}
     >
       {/* Column header */}
@@ -323,7 +313,7 @@ function RoadmapColumn({ label, color, posts, adminMode, userMap, index }: Colum
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -389,7 +379,7 @@ export default function RoadmapPage() {
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {columns.map((col, i) => (
+          {columns.map((col) => (
             <RoadmapColumn
               key={col.status}
               label={col.label}
@@ -397,7 +387,6 @@ export default function RoadmapPage() {
               posts={col.posts}
               adminMode={adminMode}
               userMap={userMap}
-              index={i}
             />
           ))}
         </div>

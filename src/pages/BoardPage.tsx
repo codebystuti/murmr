@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutList } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,6 @@ export default function BoardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const shouldReduceMotion = useReducedMotion();
 
   const boardSlug = searchParams.get('board') ?? 'all';
   const statusFilter = (searchParams.get('status') as StatusFilter) ?? 'all';
@@ -271,17 +270,13 @@ export default function BoardPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <AnimatePresence mode="popLayout">
-              {filteredPosts.map((post, index) => (
+              {filteredPosts.map((post) => (
                 <motion.div
                   key={post.id}
-                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 6 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.98, transition: { duration: 0.18, ease: 'easeIn' } }}
-                  transition={{
-                    duration: shouldReduceMotion ? 0.1 : 0.6,
-                    delay: shouldReduceMotion ? 0 : Math.min(index * 0.1, 0.6),
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
+                  exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18, ease: 'easeIn' } }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <PostCard
                     post={post}
