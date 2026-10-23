@@ -45,11 +45,11 @@ function ActivityRow({ event, index }: { event: ActivityEvent; index: number }) 
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -6 }}
+      initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
-        duration: shouldReduceMotion ? 0.01 : 0.45,
-        delay: shouldReduceMotion ? 0 : Math.min(index * 0.04, 0.5),
+        duration: shouldReduceMotion ? 0.01 : 1.2,
+        delay: shouldReduceMotion ? 0 : Math.min(index * 0.08, 1.0),
         ease: [0.16, 1, 0.3, 1],
       }}
       role="button"

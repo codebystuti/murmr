@@ -55,11 +55,11 @@ function StatCard({ label, value, icon, accentColor, index, onClick }: StatCardP
   return (
     <motion.button
       type="button"
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: shouldReduceMotion ? 0.01 : 0.7,
-        delay: shouldReduceMotion ? 0 : index * 0.07,
+        duration: shouldReduceMotion ? 0.01 : 1.8,
+        delay: shouldReduceMotion ? 0 : index * 0.15,
         ease: [0.16, 1, 0.3, 1],
       }}
       onClick={onClick}
@@ -208,11 +208,11 @@ export default function DashboardPage() {
                 {trendingPosts.map((post, i) => (
                   <motion.div
                     key={post.id}
-                    initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -6 }}
+                    initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -16 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{
-                      duration: shouldReduceMotion ? 0.01 : 0.65,
-                      delay: shouldReduceMotion ? 0 : 0.15 + i * 0.06,
+                      duration: shouldReduceMotion ? 0.01 : 1.6,
+                      delay: shouldReduceMotion ? 0 : 0.3 + i * 0.12,
                       ease: [0.16, 1, 0.3, 1],
                     }}
                     role="button"
@@ -396,7 +396,7 @@ export default function DashboardPage() {
         aria-label="New post"
         initial={{ scale: shouldReduceMotion ? 1 : 0, opacity: shouldReduceMotion ? 1 : 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: shouldReduceMotion ? 0 : 0.5, type: 'spring', stiffness: 260, damping: 20 }}
+        transition={{ delay: shouldReduceMotion ? 0 : 1.2, type: 'spring', stiffness: 160, damping: 14 }}
         whileTap={{ scale: 0.93 }}
         className="sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] shadow-[0_8px_24px_color-mix(in_oklab,var(--grad-1)_40%,transparent)]"
         style={{

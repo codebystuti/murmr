@@ -66,12 +66,12 @@ function ChangelogItem({ entry, index }: ChangelogItemProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-60px' }}
       transition={{
-        duration: shouldReduceMotion ? 0.01 : 0.4,
-        delay: shouldReduceMotion ? 0 : Math.min(index * 0.05, 0.2),
+        duration: shouldReduceMotion ? 0.01 : 1.2,
+        delay: shouldReduceMotion ? 0 : Math.min(index * 0.1, 0.4),
         ease: [0.16, 1, 0.3, 1],
       }}
       style={{ display: 'flex', gap: 32, marginBottom: 48 }}

@@ -274,12 +274,12 @@ export default function BoardPage() {
               {filteredPosts.map((post, index) => (
                 <motion.div
                   key={post.id}
-                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 6 }}
+                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.98, transition: { duration: 0.18, ease: 'easeIn' } }}
+                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.98, transition: { duration: 0.3, ease: 'easeIn' } }}
                   transition={{
-                    duration: shouldReduceMotion ? 0.01 : 0.6,
-                    delay: shouldReduceMotion ? 0 : Math.min(index * 0.06, 0.4),
+                    duration: shouldReduceMotion ? 0.01 : 1.6,
+                    delay: shouldReduceMotion ? 0 : Math.min(index * 0.12, 1.0),
                     ease: [0.16, 1, 0.3, 1],
                   }}
                 >

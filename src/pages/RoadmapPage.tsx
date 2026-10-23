@@ -68,10 +68,10 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
   return (
     <motion.div
       layout={!shouldReduceMotion}
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 6 }}
+      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.97 }}
-      transition={{ duration: shouldReduceMotion ? 0.01 : 0.45, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: shouldReduceMotion ? 0.01 : 1.2, ease: [0.16, 1, 0.3, 1] }}
       role="button"
       tabIndex={0}
       aria-label={`Open post: ${post.title}`}
@@ -248,11 +248,11 @@ function RoadmapColumn({ label, color, posts, adminMode, userMap, index }: Colum
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
+      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: shouldReduceMotion ? 0.01 : 0.65,
-        delay: shouldReduceMotion ? 0 : index * 0.1,
+        duration: shouldReduceMotion ? 0.01 : 1.8,
+        delay: shouldReduceMotion ? 0 : index * 0.2,
         ease: [0.16, 1, 0.3, 1],
       }}
       style={{ flex: '1 1 0', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 8 }}
