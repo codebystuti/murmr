@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pencil, Trash2, Check, X } from 'lucide-react';
 import type { Comment, User } from '@/types';
 import { formatRelativeTime, getInitials } from '@/lib/utils';
@@ -21,8 +21,30 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
   const { mutate: deleteComment, isPending: isDeleting } = useDeleteComment();
 
   const authorIsAdmin = author?.role === 'admin';
-  const showEdit = canEditComment(currentUser, comment.authorId);
-  const showDelete = canDeleteComment(currentUser, comment.authorId);
+  // An optimistic comment ('temp-…') isn't saved yet: editing or deleting it would target an id that
+  // doesn't exist and be lost when the real comment replaces it.
+  const isSaved = !comment.id.startsWith('temp-');
+  const showEdit = isSaved && canEditComment(currentUser, comment.authorId);
+  const showDelete = isSaved && canDeleteComment(currentUser, comment.authorId);
+
+  const deleteTriggerRef = useRef<HTMLButtonElement>(null);
+  const cancelDeleteRef = useRef<HTMLButtonElement>(null);
+  const restoreDeleteFocus = useRef(false);
+
+  // Inline delete confirmation: focus moves to Cancel, Esc cancels, and focus returns to the trash button.
+  useEffect(() => {
+    if (confirmDelete) {
+      cancelDeleteRef.current?.focus();
+    } else if (restoreDeleteFocus.current) {
+      restoreDeleteFocus.current = false;
+      deleteTriggerRef.current?.focus();
+    }
+  }, [confirmDelete]);
+
+  function cancelDelete() {
+    restoreDeleteFocus.current = true;
+    setConfirmDelete(false);
+  }
 
   function handleSave() {
     if (!editBody.trim()) return;
@@ -72,6 +94,7 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
       <div
         style={{
           flex: 1,
+          minWidth: 0,
           padding: '8px 16px',
           borderRadius: 10,
           border: '1px solid var(--border)',
@@ -124,7 +147,8 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
 
           {/* Action buttons (non-edit mode) */}
           {!editing && (showEdit || showDelete) && (
-            <div style={{ display: 'flex', gap: 4 }}>
+            // Touch: wider gap so the 44px hit areas of the two 24px buttons don't overlap.
+            <div className="[@media(pointer:coarse)]:!gap-5" style={{ display: 'flex', gap: 4 }}>
               {showEdit && (
                 <button
                   type="button"
@@ -134,7 +158,7 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
                     setConfirmDelete(false);
                   }}
                   aria-label="Edit comment"
-                  className="bg-transparent text-[var(--tx3)] hover:bg-[var(--elev)] hover:text-[var(--tx)] active:scale-[0.97] focus-ring"
+                  className="hit-44 bg-transparent text-[var(--tx3)] hover:bg-[var(--elev)] hover:text-[var(--tx)] active:scale-[0.97] focus-ring"
                   style={{
                     width: 24,
                     height: 24,
@@ -153,11 +177,12 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
 
               {showDelete && !confirmDelete && (
                 <button
+                  ref={deleteTriggerRef}
                   type="button"
                   onClick={() => setConfirmDelete(true)}
                   aria-label="Delete comment"
                   disabled={isDeleting}
-                  className="bg-transparent text-[var(--tx3)] hover:bg-[color-mix(in_oklab,var(--status-error)_12%,transparent)] hover:text-[var(--status-error)] active:scale-[0.97] focus-ring-error"
+                  className="hit-44 bg-transparent text-[var(--tx3)] hover:bg-[color-mix(in_oklab,var(--status-error)_12%,transparent)] hover:text-[var(--status-error)] active:scale-[0.97] focus-ring-error"
                   style={{
                     width: 24,
                     height: 24,
@@ -177,6 +202,15 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
               {/* Inline delete confirmation */}
               {confirmDelete && (
                 <div
+                  role="group"
+                  aria-label="Delete this comment?"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      e.stopPropagation();
+                      cancelDelete();
+                    }
+                  }}
+                  className="[@media(pointer:coarse)]:!gap-5"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -193,6 +227,7 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
                     onClick={handleDelete}
                     disabled={isDeleting}
                     aria-label="Confirm delete"
+                    className="hit-44 focus-ring"
                     style={{
                       background: 'none',
                       border: 'none',
@@ -200,15 +235,17 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
                       cursor: 'pointer',
                       padding: 0,
                       display: 'flex',
-                      outline: 'none',
+                      borderRadius: 4,
                     }}
                   >
                     <Check size={12} />
                   </button>
                   <button
+                    ref={cancelDeleteRef}
                     type="button"
-                    onClick={() => setConfirmDelete(false)}
+                    onClick={cancelDelete}
                     aria-label="Cancel delete"
+                    className="hit-44 focus-ring"
                     style={{
                       background: 'none',
                       border: 'none',
@@ -216,7 +253,7 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
                       cursor: 'pointer',
                       padding: 0,
                       display: 'flex',
-                      outline: 'none',
+                      borderRadius: 4,
                     }}
                   >
                     <X size={12} />
@@ -275,9 +312,9 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
                   color: 'var(--tx2)',
                   fontSize: 12,
                   cursor: 'pointer',
-                  outline: 'none',
                   fontFamily: 'var(--font-body)',
                 }}
+                className="focus-ring"
               >
                 Cancel
               </button>
@@ -285,7 +322,7 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving || !editBody.trim()}
-                className="active:scale-[0.97]"
+                className="active:scale-[0.97] focus-ring"
                 style={{
                   padding: '5px 10px',
                   borderRadius: 6,
@@ -296,7 +333,6 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
                   fontWeight: 600,
                   cursor: isSaving ? 'default' : 'pointer',
                   opacity: !editBody.trim() ? 0.4 : 1,
-                  outline: 'none',
                   fontFamily: 'var(--font-body)',
                   transition: 'all var(--dur-ui)',
                 }}
@@ -316,6 +352,7 @@ export function CommentItem({ comment, author, currentUser }: CommentItemProps) 
               lineHeight: 1.6,
               margin: 0,
               whiteSpace: 'pre-wrap',
+              overflowWrap: 'anywhere',
             }}
           >
             {comment.body}

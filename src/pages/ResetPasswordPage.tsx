@@ -31,7 +31,10 @@ export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<FormData>({ resolver: zodResolver(schema) });
+  const form = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { password: '', confirm: '' },
+  });
   const password = form.watch('password', '');
 
   async function onSubmit(data: FormData) {
@@ -113,7 +116,7 @@ export default function ResetPasswordPage() {
             </motion.p>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'contents' }}>
+              <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'contents' }} noValidate>
                 <motion.div variants={itemVariants}>
                   <FormField
                     control={form.control}

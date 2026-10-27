@@ -12,16 +12,20 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, author, postId }: PostCardProps) {
+  // Same structure as the Dashboard trending rows: border and background sit on the card itself and
+  // only change colour on hover. No lift or separate surface layer, so nothing inside the card moves
+  // and the borders cross-fade with the theme exactly like every other page.
   return (
     <article
-      className="bg-[var(--surface)] border border-[var(--border)] rounded-xl hover:bg-[var(--elev)] hover:border-[var(--border-2)] hover:[box-shadow:var(--shadow)] hover:translate-y-[-2px] active:scale-[0.98] focus-within:bg-[var(--elev)] focus-within:border-[var(--border-2)]"
+      className="rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--elev)] hover:border-[var(--border-2)] active:bg-[color-mix(in_oklab,var(--elev)_55%,var(--border))] focus-within:bg-[var(--elev)] focus-within:border-[var(--border-2)]"
       style={{
         position: 'relative',
         display: 'flex',
         gap: 12,
         padding: 16,
         alignItems: 'flex-start',
-        transition: 'all var(--dur-ui) var(--ease-out-expo)',
+        transition:
+          'background var(--dur-ui) var(--ease-out-expo), border-color var(--dur-ui) var(--ease-out-expo), box-shadow var(--dur-ui) var(--ease-out-expo), transform var(--dur-ui) var(--ease-out-expo)',
       }}
     >
       {/* Overlay link fills the card; sits above static content (z:1) but below upvote (z:2) */}
@@ -47,6 +51,7 @@ export function PostCard({ post, author, postId }: PostCardProps) {
             marginBottom: 4,
             lineHeight: 1.35,
             letterSpacing: '-0.005em',
+            overflowWrap: 'anywhere',
           }}
         >
           {post.title}
@@ -63,6 +68,7 @@ export function PostCard({ post, author, postId }: PostCardProps) {
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
+              overflowWrap: 'anywhere',
             }}
           >
             {post.body}

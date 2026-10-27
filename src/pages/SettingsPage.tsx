@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { motion, useReducedMotion } from 'framer-motion';
-import { Sun, Moon, RefreshCw, Loader2, ShieldCheck, User as UserIcon, ArrowUpRight } from 'lucide-react';
+import { useEnterReveal, enterDelay } from '@/hooks/useEnterReveal';
+import { Sun, Moon, RefreshCw, Loader2, ShieldCheck, User as UserIcon, ArrowUpRight, LogOut } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/features/auth/store';
+import { usersApi } from '@/lib/api';
 import { useThemeStore } from '@/lib/theme-store';
 import { resetSeed } from '@/lib/seed';
 import { toast } from 'sonner';
+import type { User } from '@/types';
 
 type Theme = 'light' | 'dark';
 
@@ -160,10 +163,10 @@ function InfoValue({ value }: { value: string }) {
 // ── Main page ──────────────────────────────────────────────────────
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const { theme, setTheme } = useThemeStore();
   const qc = useQueryClient();
-  const shouldReduceMotion = useReducedMotion();
+  const revealRef = useEnterReveal<HTMLDivElement>(true);
   const [resetting, setResetting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -172,19 +175,68 @@ export default function SettingsPage() {
     return () => { isMountedRef.current = false; };
   }, []);
 
+  const resetTriggerRef = useRef<HTMLButtonElement>(null);
+  const cancelResetRef = useRef<HTMLButtonElement>(null);
+  const restoreResetFocus = useRef(false);
+  const resettingRef = useRef(false);
+  resettingRef.current = resetting;
+
+  // Inline reset confirmation: focus lands on Cancel, Esc cancels (not mid-reset), and focus returns
+  // to the Reset button afterwards.
+  useEffect(() => {
+    if (!confirmReset) {
+      if (restoreResetFocus.current) resetTriggerRef.current?.focus();
+      restoreResetFocus.current = false;
+      return;
+    }
+    cancelResetRef.current?.focus();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || resettingRef.current) return;
+      restoreResetFocus.current = true;
+      setConfirmReset(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [confirmReset]);
+
+  // Rapid toggles: only the latest one refetches the users table.
+  const roleToggleSeq = useRef(0);
+
   if (!user) return null;
 
-  function handleRoleToggle() {
+  async function handleRoleToggle() {
     if (!user) return;
+    const userId = user.id;
     const nextRole = user.role === 'admin' ? 'user' : 'admin';
+    // Permissions read the auth store; Admin badges on posts and comments read the users table.
     updateUser({ role: nextRole });
+    qc.setQueryData<User[]>(['users'], (old) => old?.map((u) => (u.id === userId ? { ...u, role: nextRole } : u)));
     toast.success(`Switched to ${nextRole} role`);
+    const seq = ++roleToggleSeq.current;
+    try {
+      await usersApi.update(userId, { role: nextRole });
+    } catch {
+      // Not in the users table (nothing shows a badge for them then): the auth store change still applies.
+    }
+    if (seq === roleToggleSeq.current) qc.invalidateQueries({ queryKey: ['users'] });
+  }
+
+  function handleSignOut() {
+    logout();
+    qc.clear();
+    navigate('/login');
+  }
+
+  function cancelReset() {
+    restoreResetFocus.current = true;
+    setConfirmReset(false);
   }
 
   async function handleReset() {
     setResetting(true);
     await new Promise((r) => setTimeout(r, 600));
-    resetSeed();
+    // Keep the signed-in account (with its current name and role) in the fresh users table.
+    resetSeed(useAuthStore.getState().user);
     qc.invalidateQueries();
     if (isMountedRef.current) {
       setResetting(false);
@@ -233,22 +285,31 @@ export default function SettingsPage() {
           description: 'Toggle between user and admin to preview different permission levels.',
           control: <RoleToggle role={user.role} onToggle={handleRoleToggle} />,
         },
+        {
+          label: 'Sign out',
+          description: 'End your session on this device.',
+          control: (
+            <Button variant="default" size="sm" onClick={handleSignOut}>
+              <LogOut size={13} aria-hidden="true" />
+              Sign out
+            </Button>
+          ),
+        },
       ],
     },
   ];
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ flex: 1 }}>
+    <div ref={revealRef} className="flex flex-col overflow-hidden" style={{ flex: 1 }}>
       <Topbar title="Settings" />
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: 600, margin: '0 auto', width: '100%', padding: '24px 24px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {sections.map((section, si) => (
-            <motion.div
+            <div
               key={section.title}
-              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: shouldReduceMotion ? 0.01 : 0.25, delay: shouldReduceMotion ? 0 : si * 0.06, ease: [0.16, 1, 0.3, 1] }}
+              className="murmr-enter"
+              style={{ '--enter-delay': enterDelay(si) } as React.CSSProperties}
             >
               <Section title={section.title}>
                 {section.rows.map((row) => (
@@ -261,14 +322,13 @@ export default function SettingsPage() {
                   </SettingRow>
                 ))}
               </Section>
-            </motion.div>
+            </div>
           ))}
 
           {/* Danger zone */}
-          <motion.div
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: shouldReduceMotion ? 0.01 : 0.25, delay: shouldReduceMotion ? 0 : 0.14, ease: [0.16, 1, 0.3, 1] }}
+          <div
+            className="murmr-enter"
+            style={{ '--enter-delay': enterDelay(sections.length) } as React.CSSProperties}
           >
             <div
               style={{
@@ -293,6 +353,7 @@ export default function SettingsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   {!confirmReset ? (
                     <button
+                      ref={resetTriggerRef}
                       type="button"
                       onClick={() => setConfirmReset(true)}
                       className="active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)]"
@@ -316,7 +377,7 @@ export default function SettingsPage() {
                       Reset data
                     </button>
                   ) : (
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <div role="group" aria-label="Reset demo data?" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       <span style={{ fontSize: 12, color: 'var(--tx2)' }}>Are you sure?</span>
                       <button
                         type="button"
@@ -344,8 +405,9 @@ export default function SettingsPage() {
                         {resetting ? 'Resetting…' : 'Yes, reset'}
                       </button>
                       <button
+                        ref={cancelResetRef}
                         type="button"
-                        onClick={() => setConfirmReset(false)}
+                        onClick={cancelReset}
                         className="active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)]"
                         style={{
                           padding: '6px 12px',
@@ -367,10 +429,13 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Footer version info */}
-          <div style={{ textAlign: 'center', padding: '8px 0 24px' }}>
+          <div
+            className="murmr-enter"
+            style={{ textAlign: 'center', padding: '8px 0 24px', '--enter-delay': enterDelay(sections.length + 1) } as React.CSSProperties}
+          >
             <span style={{ fontSize: 11, color: 'var(--tx3)', fontFamily: 'var(--font-mono)' }}>
               Murmr · Portfolio demo · v0.1.0
             </span>

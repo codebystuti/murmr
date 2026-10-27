@@ -1,7 +1,7 @@
-import { motion, useReducedMotion } from 'framer-motion';
 import { Rocket } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { useChangelog } from '@/features/changelog/hooks/useChangelog';
+import { useEnterReveal, enterDelay } from '@/hooks/useEnterReveal';
 import type { ChangelogEntry } from '@/types';
 
 const TYPE_META: Record<ChangelogEntry['type'], { label: string; bg: string; color: string }> = {
@@ -23,9 +23,10 @@ const TYPE_META: Record<ChangelogEntry['type'], { label: string; bg: string; col
 };
 
 function formatDate(iso: string): string {
+  // Short month keeps every date on one line in the 120px date column ("Sep 28, 2026").
   return new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
   });
 }
@@ -55,26 +56,13 @@ function ChangelogSkeleton() {
   );
 }
 
-interface ChangelogItemProps {
-  entry: ChangelogEntry;
-  index: number;
-}
-
-function ChangelogItem({ entry, index }: ChangelogItemProps) {
-  const shouldReduceMotion = useReducedMotion();
+function ChangelogItem({ entry, index }: { entry: ChangelogEntry; index: number }) {
   const typeMeta = TYPE_META[entry.type];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{
-        duration: shouldReduceMotion ? 0.01 : 1.2,
-        delay: shouldReduceMotion ? 0 : Math.min(index * 0.1, 0.4),
-        ease: [0.16, 1, 0.3, 1],
-      }}
-      style={{ display: 'flex', gap: 32, marginBottom: 48 }}
+    <div
+      className="murmr-enter"
+      style={{ display: 'flex', gap: 32, marginBottom: 48, '--enter-delay': enterDelay(index) } as React.CSSProperties}
     >
       {/* Date column — hidden on mobile, shown on md+ */}
       <div
@@ -176,15 +164,16 @@ function ChangelogItem({ entry, index }: ChangelogItemProps) {
           {entry.body}
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 export default function ChangelogPage() {
   const { data: entries = [], isLoading, error } = useChangelog();
+  const revealRef = useEnterReveal<HTMLDivElement>(!isLoading);
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ flex: 1, background: 'var(--bg)' }}>
+    <div ref={revealRef} className="flex flex-col overflow-hidden" style={{ flex: 1, background: 'var(--bg)' }}>
       <Topbar
         title="Changelog"
         sub={isLoading ? 'Loading…' : `${entries.length} releases`}
@@ -244,22 +233,6 @@ export default function ChangelogPage() {
             {entries.map((entry, i) => (
               <ChangelogItem key={entry.id} entry={entry} index={i} />
             ))}
-
-            {/* Timeline end cap */}
-            <div style={{ display: 'flex', gap: 32 }}>
-              <div style={{ width: 120, flexShrink: 0 }} />
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div
-                  style={{
-                    width: 9,
-                    height: 9,
-                    borderRadius: 999,
-                    background: 'var(--border)',
-                    flexShrink: 0,
-                  }}
-                />
-              </div>
-            </div>
           </div>
         )}
       </div>

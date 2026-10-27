@@ -16,6 +16,25 @@ const NAV_ITEMS = [
   { label: 'Go to Activity', icon: Activity, shortcut: 'G A', key: 'a', path: '/app/activity' },
 ];
 
+const PALETTE_ATTR = 'data-command-palette';
+
+/** True while a modal dialog other than the palette is open (Radix dialogs, the mobile nav drawer, …). */
+function isOtherModalOpen(): boolean {
+  return Array.from(
+    document.querySelectorAll<HTMLElement>('[role="dialog"], [role="alertdialog"]'),
+  ).some((el) => {
+    if (el.hasAttribute(PALETTE_ATTR)) return false;
+    if (el.getAttribute('aria-modal') === 'true') return true;
+    // Radix dialog content keeps data-state; a closing (animating out) dialog no longer counts.
+    return el.getAttribute('data-state') === 'open';
+  });
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable;
+}
+
 export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen } = useUIStore();
   const { theme, toggleTheme } = useThemeStore();
@@ -25,6 +44,27 @@ export function CommandPalette() {
   const { data: allPosts = [] } = usePosts();
   const pendingG = useRef(false);
   const gTimer = useRef<ReturnType<typeof setTimeout>>();
+  const panelRef = useRef<HTMLDivElement>(null);
+  // Last element focused outside the palette, so closing it can hand focus back. (Tracked continuously:
+  // by the time an effect runs on open, the input has already taken focus.)
+  const lastOutsideFocus = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const outside = (t: EventTarget | null): t is HTMLElement => t instanceof HTMLElement && !t.closest(`[${PALETTE_ATTR}]`);
+    const onFocusIn = (e: FocusEvent) => {
+      if (outside(e.target)) lastOutsideFocus.current = e.target;
+    };
+    // Focus dropped to <body> (e.g. a click on empty page): there is nothing to hand back to.
+    const onFocusOut = (e: FocusEvent) => {
+      if (outside(e.target) && e.relatedTarget === null) lastOutsideFocus.current = null;
+    };
+    document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('focusout', onFocusOut);
+    return () => {
+      document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('focusout', onFocusOut);
+    };
+  }, []);
 
   const matchedPosts = query.trim().length >= 2
     ? allPosts.filter((p) => new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(p.title))
@@ -33,24 +73,19 @@ export function CommandPalette() {
   // Global keyboard shortcuts: Cmd/Ctrl+K, sequential G→key, T for theme
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
-
-      // Cmd/Ctrl+K — always works
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      // Cmd/Ctrl+K — toggles the palette, but never stacks it on top of another modal
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        if (!commandPaletteOpen && isOtherModalOpen()) return;
         e.preventDefault();
         setCommandPaletteOpen(!commandPaletteOpen);
         return;
       }
 
-      // Escape — close palette
-      if (e.key === 'Escape') {
-        setCommandPaletteOpen(false);
+      // Single-key shortcuts only outside text fields, with the palette closed and no modal open
+      if (commandPaletteOpen || isTypingTarget(e.target) || isOtherModalOpen()) {
+        pendingG.current = false;
         return;
       }
-
-      // Sequential shortcuts only work outside inputs and when palette is closed
-      if (isInput || commandPaletteOpen) return;
 
       // T — toggle theme
       if (e.key === 't' && !e.metaKey && !e.ctrlKey && !e.altKey) {
@@ -81,6 +116,45 @@ export function CommandPalette() {
     return () => document.removeEventListener('keydown', handler);
   }, [commandPaletteOpen, setCommandPaletteOpen, toggleTheme, navigate]);
 
+  // While open, the palette is a modal: Esc closes only the palette (captured before any dialog
+  // underneath sees it), Tab stays inside it, and focus goes back where it was on close.
+  useEffect(() => {
+    if (!commandPaletteOpen) return;
+    const opener = lastOutsideFocus.current;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        setCommandPaletteOpen(false);
+        return;
+      }
+      if (e.key === 'Tab') {
+        const panel = panelRef.current;
+        if (!panel) return;
+        e.preventDefault();
+        const items = Array.from(
+          panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+        );
+        if (items.length === 0) return;
+        const index = items.indexOf(document.activeElement as HTMLElement);
+        const next = e.shiftKey
+          ? items[(index <= 0 ? items.length : index) - 1]
+          : items[(index + 1) % items.length];
+        next.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true);
+      requestAnimationFrame(() => {
+        // Commands that navigate unmount the opener; only restore when it is still on screen.
+        if (opener?.isConnected && document.activeElement === document.body) opener.focus({ preventScroll: true });
+      });
+    };
+  }, [commandPaletteOpen, setCommandPaletteOpen]);
+
   // Clear search when palette closes
   useEffect(() => {
     if (!commandPaletteOpen) setQuery('');
@@ -107,20 +181,26 @@ export function CommandPalette() {
 
   return (
     <div
-      className="murmr-palette-backdrop fixed inset-0 z-50 flex items-start justify-center pt-[12%]"
+      className="murmr-palette-backdrop fixed inset-0 z-50 flex items-start justify-center px-3 pt-[12%]"
       style={{ background: 'rgba(8,7,13,0.5)', backdropFilter: 'blur(8px)' }}
       onClick={() => setCommandPaletteOpen(false)}
     >
       <div
-        className="murmr-palette-panel w-[560px] rounded-xl border border-border bg-surface overflow-hidden shadow-[0_30px_80px_-10px_rgba(0,0,0,0.5),0_0_0_1px_var(--border-2)]"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
+        data-command-palette=""
+        className="murmr-palette-panel w-full max-w-[560px] rounded-xl border border-border bg-surface overflow-hidden shadow-[0_30px_80px_-10px_rgba(0,0,0,0.5),0_0_0_1px_var(--border-2)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <Command shouldFilter={false}>
+        <Command shouldFilter={false} label="Command palette">
           <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
-            <span className="text-tx2 text-base">⌕</span>
+            <span className="text-tx2 text-base" aria-hidden="true">⌕</span>
             <Command.Input
-              className="flex-1 bg-transparent border-none outline-none text-base text-tx placeholder:text-tx3 font-[family-name:var(--font-body)]"
+              className="flex-1 min-w-0 bg-transparent border-none outline-none text-base text-tx placeholder:text-tx3 font-[family-name:var(--font-body)]"
               placeholder="Search or jump to..."
+              aria-label="Search posts or jump to a page"
               autoFocus
               value={query}
               onValueChange={setQuery}
@@ -135,6 +215,27 @@ export function CommandPalette() {
               <Command.Empty className="py-6 text-center text-sm text-tx3">
                 No results for &ldquo;{query}&rdquo;
               </Command.Empty>
+            )}
+
+            {/* Nav — first, so a page name + Enter goes to that page rather than a post that mentions it */}
+            {filteredNav.length > 0 && (
+              <Command.Group
+                heading="Navigate"
+                className="[&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-tx3"
+              >
+                {filteredNav.map((item) => (
+                  <Command.Item
+                    key={item.path}
+                    value={item.path}
+                    onSelect={() => run(() => navigate(item.path))}
+                    className="flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm text-tx data-[selected=true]:bg-[color-mix(in_oklab,var(--grad-1)_12%,transparent)] data-[selected=true]:border-l-2 data-[selected=true]:border-grad2 border-l-2 border-transparent"
+                  >
+                    <item.icon size={16} className="text-tx2" />
+                    <span className="flex-1">{item.label}</span>
+                    <kbd className="text-[11px] font-mono text-tx3">{item.shortcut}</kbd>
+                  </Command.Item>
+                ))}
+              </Command.Group>
             )}
 
             {/* Posts — only shown when query is 2+ chars */}
@@ -152,27 +253,6 @@ export function CommandPalette() {
                   >
                     <FileText size={16} className="text-tx2 shrink-0" />
                     <span className="flex-1 truncate">{post.title}</span>
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            )}
-
-            {/* Nav */}
-            {filteredNav.length > 0 && (
-              <Command.Group
-                heading="Navigate"
-                className="[&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-tx3"
-              >
-                {filteredNav.map((item) => (
-                  <Command.Item
-                    key={item.path}
-                    value={item.path}
-                    onSelect={() => run(() => navigate(item.path))}
-                    className="flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm text-tx data-[selected=true]:bg-[color-mix(in_oklab,var(--grad-1)_12%,transparent)] data-[selected=true]:border-l-2 data-[selected=true]:border-grad2 border-l-2 border-transparent"
-                  >
-                    <item.icon size={16} className="text-tx2" />
-                    <span className="flex-1">{item.label}</span>
-                    <kbd className="text-[11px] font-mono text-tx3">{item.shortcut}</kbd>
                   </Command.Item>
                 ))}
               </Command.Group>

@@ -1,24 +1,21 @@
 import type { Comment } from '@/types';
 import { STORAGE_KEYS } from '@/lib/seed';
 import { delay, generateId } from '@/lib/utils';
+import { storage, writeList } from './storage';
 
-function getComments(): Comment[] {
-  const raw = localStorage.getItem(STORAGE_KEYS.COMMENTS);
-  return raw ? (JSON.parse(raw) as Comment[]) : [];
-}
+const getComments = storage.comments;
 
 function saveComments(comments: Comment[]) {
-  localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(comments));
+  writeList(STORAGE_KEYS.COMMENTS, comments);
 }
 
 function incrementPostCommentCount(postId: string, delta: 1 | -1) {
-  const raw = localStorage.getItem(STORAGE_KEYS.POSTS);
-  if (!raw) return;
-  const posts = JSON.parse(raw);
-  const idx = posts.findIndex((p: { id: string }) => p.id === postId);
+  if (localStorage.getItem(STORAGE_KEYS.POSTS) === null) return;
+  const posts = storage.posts();
+  const idx = posts.findIndex((p) => p.id === postId);
   if (idx !== -1) {
     posts[idx].commentCount = Math.max(0, (posts[idx].commentCount ?? 0) + delta);
-    localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts));
+    writeList(STORAGE_KEYS.POSTS, posts);
   }
 }
 

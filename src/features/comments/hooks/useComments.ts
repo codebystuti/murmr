@@ -43,6 +43,8 @@ export function useAddComment() {
       qc.invalidateQueries({ queryKey: ['comments', newComment.postId] });
       qc.invalidateQueries({ queryKey: ['post', newComment.postId] });
       qc.invalidateQueries({ queryKey: ['posts'] });
+      // The profile's "My comments" list (prefetched by the app shell) includes the new one.
+      qc.invalidateQueries({ queryKey: ['comments', 'author'] });
     },
   });
 }

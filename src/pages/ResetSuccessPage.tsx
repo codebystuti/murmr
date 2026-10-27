@@ -52,11 +52,11 @@ export default function ResetSuccessPage() {
         </motion.p>
 
         <motion.div variants={itemVariants}>
-          <Link to="/login" style={{ display: 'block', textDecoration: 'none' }}>
-            <Button variant="primary" size="md" className="cta-block">
+          <Button asChild variant="primary" size="md" className="cta-block">
+            <Link to="/login" style={{ textDecoration: 'none' }}>
               Sign in with new password
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </motion.div>
       </AuthCard>
     </AuthPageLayout>

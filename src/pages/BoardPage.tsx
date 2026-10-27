@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { LayoutList } from 'lucide-react';
+import { LayoutList, Plus } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { Button } from '@/components/ui/button';
 import { SubmitFeedbackModal } from '@/components/shared/SubmitFeedbackModal';
@@ -10,7 +9,9 @@ import { FilterBar } from '@/features/posts/components/FilterBar';
 import type { StatusFilter, SortOption } from '@/features/posts/types';
 import { usePosts } from '@/features/posts/hooks/usePosts';
 import { useBoards } from '@/features/boards/hooks/useBoards';
-import { useUserMap } from '@/hooks/useUserMap';
+import { useUserMap, useUsersLoading } from '@/hooks/useUserMap';
+import { useEnterReveal, enterDelay } from '@/hooks/useEnterReveal';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { formatNumber } from '@/lib/utils';
 import type { Post, PostStatus } from '@/types';
 
@@ -18,7 +19,8 @@ export default function BoardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const shouldReduceMotion = useReducedMotion();
+  // On phones the topbar CTA is icon-only so the board title keeps its room.
+  const isPhone = !useMediaQuery('(min-width: 640px)');
 
   const boardSlug = searchParams.get('board') ?? 'all';
   const statusFilter = (searchParams.get('status') as StatusFilter) ?? 'all';
@@ -26,6 +28,7 @@ export default function BoardPage() {
 
   const { data: boards = [], isLoading: boardsLoading } = useBoards();
   const userMap = useUserMap();
+  const usersLoading = useUsersLoading();
 
   // Resolve current board id from slug
   const currentBoardId = useMemo(() => {
@@ -33,7 +36,12 @@ export default function BoardPage() {
     return boards.find((b) => b.slug === boardSlug)?.id;
   }, [boardSlug, boards]);
 
-  const { data: allPosts = [], isLoading: postsLoading } = usePosts(currentBoardId);
+  // One shared cache for every board: switching tabs filters in place instead of refetching through a skeleton.
+  const { data: everyPost = [], isLoading: postsLoading } = usePosts();
+  const allPosts = useMemo(
+    () => (currentBoardId ? everyPost.filter((p) => p.boardId === currentBoardId) : everyPost),
+    [everyPost, currentBoardId],
+  );
 
   // Client-side filter + sort
   const filteredPosts = useMemo(() => {
@@ -88,10 +96,11 @@ export default function BoardPage() {
   const uniqueContributors = new Set(allPosts.map((p) => p.authorId)).size;
   const isFiltered = statusFilter !== 'all' || searchTerm.trim() !== '';
 
-  const isLoading = boardsLoading || postsLoading;
+  const isLoading = boardsLoading || postsLoading || usersLoading;
+  const revealRef = useEnterReveal<HTMLDivElement>(!isLoading);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
+    <div ref={revealRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
       <Topbar
         title={currentBoard?.name ?? 'Feedback board'}
         sub={
@@ -102,21 +111,27 @@ export default function BoardPage() {
             : `${formatNumber(allPosts.length)} posts · ${formatNumber(uniqueContributors)} contributors`
         }
         action={
-          <Button variant="primary" size="sm" onClick={() => setSubmitOpen(true)}>
-            + New post
-          </Button>
+          isPhone ? (
+            <Button variant="primary" size="icon" onClick={() => setSubmitOpen(true)} aria-label="New post">
+              <Plus size={16} />
+            </Button>
+          ) : (
+            <Button variant="primary" size="sm" onClick={() => setSubmitOpen(true)}>
+              + New post
+            </Button>
+          )
         }
       />
 
-      {/* Board tabs */}
+      {/* Board tabs — still swipeable on small screens, just without a visible scrollbar */}
       <div
+        className="no-scrollbar"
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 4,
           padding: '0 24px',
           borderBottom: '1px solid var(--border)',
-          background: 'var(--bg)',
           flexShrink: 0,
           overflowX: 'auto',
         }}
@@ -270,36 +285,30 @@ export default function BoardPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <AnimatePresence mode="popLayout">
-              {filteredPosts.map((post, index) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.98, transition: { duration: 0.3, ease: 'easeIn' } }}
-                  transition={{
-                    duration: shouldReduceMotion ? 0.01 : 1.6,
-                    delay: shouldReduceMotion ? 0 : Math.min(index * 0.12, 1.0),
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                >
-                  <PostCard
-                    post={post}
-                    author={userMap.get(post.authorId)}
-                    postId={post.id}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
+            {filteredPosts.map((post, i) => (
+              <div
+                key={post.id}
+                className="murmr-enter"
+                style={{ '--enter-delay': enterDelay(i) } as React.CSSProperties}
+              >
+                <PostCard
+                  post={post}
+                  author={userMap.get(post.authorId)}
+                  postId={post.id}
+                />
+              </div>
+            ))}
 
             <p
+              className="murmr-enter"
               style={{
                 fontSize: 11,
                 color: 'var(--tx3)',
                 textAlign: 'center',
                 padding: '16px 0 8px',
                 fontFamily: 'var(--font-mono)',
-              }}
+                '--enter-delay': enterDelay(Math.min(filteredPosts.length, 8)),
+              } as React.CSSProperties}
             >
               {filteredPosts.length} post{filteredPosts.length !== 1 ? 's' : ''}
             </p>

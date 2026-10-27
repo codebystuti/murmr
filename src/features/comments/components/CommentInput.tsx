@@ -20,10 +20,10 @@ export function CommentInput({ postId, currentUser }: CommentInputProps) {
     addComment(
       { postId, authorId: currentUser.id, body: trimmed },
       {
-        onSuccess: () => {
-          setBody('');
-          textareaRef.current?.focus();
-        },
+        onSuccess: () => setBody(''),
+        // Clicking "Comment" leaves focus on a button that is disabled while pending,
+        // which drops focus to <body>; bring it back to the textarea either way.
+        onSettled: () => textareaRef.current?.focus(),
       },
     );
   }
@@ -68,8 +68,12 @@ export function CommentInput({ postId, currentUser }: CommentInputProps) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Add a comment…"
+          aria-label="Write a comment"
           rows={2}
-          disabled={isPending}
+          // readOnly (not disabled) while posting: a disabled element loses focus to <body>.
+          readOnly={isPending}
+          aria-disabled={isPending || undefined}
+          aria-busy={isPending || undefined}
           className="input-field"
           style={{
             width: '100%',

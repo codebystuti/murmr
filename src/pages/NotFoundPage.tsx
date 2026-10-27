@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { mainThreadMotion } from '@/lib/motion';
 
 export default function NotFoundPage() {
   const shouldReduceMotion = useReducedMotion();
@@ -19,6 +20,7 @@ export default function NotFoundPage() {
       }}
     >
       <motion.div
+        {...mainThreadMotion}
         initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: shouldReduceMotion ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}

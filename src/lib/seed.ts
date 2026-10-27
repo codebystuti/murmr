@@ -26,9 +26,32 @@ export function initSeed() {
   localStorage.setItem(STORAGE_KEYS.SEEDED, 'true');
 }
 
-export function resetSeed() {
+/**
+ * Wipes and regenerates the demo data. Pass the signed-in user to keep their account in the
+ * fresh users table (as it is now), so names, roles and logins stay consistent after a reset.
+ */
+export function resetSeed(keepUser?: User | null) {
   Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k));
   initSeed();
+  if (keepUser) {
+    const users = (seedData.users as User[]).filter((u) => u.id !== keepUser.id);
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([...users, keepUser]));
+  }
+}
+
+const SEED_BY_KEY: Record<string, unknown> = {
+  [STORAGE_KEYS.USERS]: seedData.users,
+  [STORAGE_KEYS.BOARDS]: seedData.boards,
+  [STORAGE_KEYS.POSTS]: seedData.posts,
+  [STORAGE_KEYS.COMMENTS]: seedData.comments,
+  [STORAGE_KEYS.CHANGELOG]: seedData.changelog,
+  [STORAGE_KEYS.ACTIVITY]: seedData.activity,
+};
+
+/** A fresh copy of the seed value for a storage key (callers may mutate it), or undefined. */
+export function getSeedValue(key: string): unknown {
+  const value = SEED_BY_KEY[key];
+  return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 }
 
 export { STORAGE_KEYS, BOARDS };

@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -85,12 +85,16 @@ function StepIndicator({ current }: { current: number }) {
   );
 }
 
-function fieldStyle(hasError = false): React.CSSProperties {
+// Focus wins over error (matches .input-field / .input-error in globals.css).
+function fieldStyle(hasError = false, focused = false): React.CSSProperties {
   return {
     width: '100%',
     padding: '9px 12px',
     borderRadius: 8,
-    border: `1px solid ${hasError ? 'var(--status-error)' : 'var(--border)'}`,
+    border: `1px solid ${
+      focused ? 'var(--grad-1)' : hasError ? 'var(--status-error)' : 'var(--border)'
+    }`,
+    boxShadow: focused ? '0 0 0 3px color-mix(in oklab, var(--grad-1) 20%, transparent)' : 'none',
     background: 'var(--bg)',
     color: 'var(--tx)',
     fontSize: 14,
@@ -101,17 +105,7 @@ function fieldStyle(hasError = false): React.CSSProperties {
   };
 }
 
-function focusStyle(e: React.FocusEvent<HTMLElement>) {
-  (e.target as HTMLElement).style.borderColor = 'var(--grad-1)';
-  (e.target as HTMLElement).style.boxShadow =
-    '0 0 0 3px color-mix(in oklab, var(--grad-1) 20%, transparent)';
-}
-function blurStyle(hasError: boolean) {
-  return (e: React.FocusEvent<HTMLElement>) => {
-    (e.target as HTMLElement).style.borderColor = hasError ? 'var(--status-error)' : 'var(--border)';
-    (e.target as HTMLElement).style.boxShadow = 'none';
-  };
-}
+type TextFieldName = 'title' | 'body' | 'tags';
 
 export function SubmitFeedbackModal({
   open,
@@ -119,6 +113,17 @@ export function SubmitFeedbackModal({
   defaultBoardId,
 }: SubmitFeedbackModalProps) {
   const [step, setStep] = useState(1);
+  const [focusedField, setFocusedField] = useState<TextFieldName | null>(null);
+  const uid = useId();
+  const ids = {
+    title: `${uid}-title`,
+    titleError: `${uid}-title-error`,
+    body: `${uid}-body`,
+    bodyError: `${uid}-body-error`,
+    board: `${uid}-board`,
+    boardError: `${uid}-board-error`,
+    tags: `${uid}-tags`,
+  };
   const { user } = useAuth();
   const { data: boards = [] } = useBoards();
   const { mutate: createPost, isPending } = useCreatePost();
@@ -162,6 +167,37 @@ export function SubmitFeedbackModal({
 
   function prevStep() {
     setStep((s) => Math.max(1, s - 1));
+  }
+
+  // One <form> wraps all three steps, so Enter in a text input submits it implicitly.
+  // Only step 3 may create the post; on steps 1–2 Enter behaves like "Next".
+  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (step < 3) {
+      void nextStep();
+      return;
+    }
+    void form.handleSubmit(onSubmit)(e);
+  }
+
+  // Compose RHF's handlers with the focus styling so RHF still sees blur (mode: onTouched).
+  function bindField(name: TextFieldName) {
+    const reg = form.register(name);
+    return {
+      ...reg,
+      onFocus: () => setFocusedField(name),
+      onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFocusedField((f) => (f === name ? null : f));
+        return reg.onBlur(e);
+      },
+      onChange: async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        await reg.onChange(e);
+        // A field flagged by Next/Enter before it was ever blurred isn't "touched" yet,
+        // so RHF wouldn't re-validate it on change — do it so the error clears once fixed.
+        const state = form.getFieldState(name);
+        if (state.error && !state.isTouched) void form.trigger(name);
+      },
+    };
   }
 
   function onSubmit(data: FormData) {
@@ -242,11 +278,14 @@ export function SubmitFeedbackModal({
               >
                 Submit feedback
               </Dialog.Title>
+              <Dialog.Description className="sr-only">
+                Share an idea or report a problem in three steps: details, board, and review.
+              </Dialog.Description>
               <Dialog.Close asChild>
                 <button
                   type="button"
                   aria-label="Close"
-                  className="bg-transparent text-[var(--tx3)] hover:bg-[var(--elev)] hover:text-[var(--tx)] focus-ring"
+                  className="bg-transparent text-[var(--tx3)] hover:bg-[var(--elev)] hover:text-[var(--tx)] focus-ring hit-44"
                   style={{
                     width: 28,
                     height: 28,
@@ -267,13 +306,14 @@ export function SubmitFeedbackModal({
           </div>
 
           {/* Body */}
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={handleFormSubmit} noValidate>
             <div style={{ padding: '20px 24px', minHeight: 240 }}>
               {/* Step 1: Title + Description */}
               {step === 1 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
                     <label
+                      htmlFor={ids.title}
                       style={{
                         display: 'block',
                         fontSize: 12,
@@ -285,15 +325,16 @@ export function SubmitFeedbackModal({
                       Title <span style={{ color: 'var(--status-error)' }}>*</span>
                     </label>
                     <input
-                      {...form.register('title')}
+                      {...bindField('title')}
+                      id={ids.title}
                       autoFocus
                       placeholder="Short, clear summary of your feedback"
-                      style={fieldStyle(!!form.formState.errors.title)}
-                      onFocus={focusStyle}
-                      onBlur={blurStyle(!!form.formState.errors.title)}
+                      aria-invalid={!!form.formState.errors.title}
+                      aria-describedby={form.formState.errors.title ? ids.titleError : undefined}
+                      style={fieldStyle(!!form.formState.errors.title, focusedField === 'title')}
                     />
                     {form.formState.errors.title && (
-                      <p style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 4 }}>
+                      <p id={ids.titleError} style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 4 }}>
                         {form.formState.errors.title.message}
                       </p>
                     )}
@@ -311,6 +352,7 @@ export function SubmitFeedbackModal({
 
                   <div>
                     <label
+                      htmlFor={ids.body}
                       style={{
                         display: 'block',
                         fontSize: 12,
@@ -332,15 +374,20 @@ export function SubmitFeedbackModal({
                       </span>
                     </label>
                     <textarea
-                      {...form.register('body')}
+                      {...bindField('body')}
+                      id={ids.body}
                       rows={5}
                       placeholder="More context helps your team prioritise and understand the request…"
-                      style={{ ...fieldStyle(!!form.formState.errors.body), resize: 'vertical', lineHeight: 1.6 }}
-                      onFocus={focusStyle}
-                      onBlur={blurStyle(!!form.formState.errors.body)}
+                      aria-invalid={!!form.formState.errors.body}
+                      aria-describedby={form.formState.errors.body ? ids.bodyError : undefined}
+                      style={{
+                        ...fieldStyle(!!form.formState.errors.body, focusedField === 'body'),
+                        resize: 'vertical',
+                        lineHeight: 1.6,
+                      }}
                     />
                     {form.formState.errors.body && (
-                      <p style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 4 }}>
+                      <p id={ids.bodyError} style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 4 }}>
                         {form.formState.errors.body.message}
                       </p>
                     )}
@@ -353,6 +400,7 @@ export function SubmitFeedbackModal({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
                     <label
+                      id={ids.board}
                       style={{
                         display: 'block',
                         fontSize: 12,
@@ -363,13 +411,19 @@ export function SubmitFeedbackModal({
                     >
                       Board <span style={{ color: 'var(--status-error)' }}>*</span>
                     </label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div
+                      role="group"
+                      aria-labelledby={ids.board}
+                      aria-describedby={form.formState.errors.boardId ? ids.boardError : undefined}
+                      style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+                    >
                       {boards.map((board: Board) => {
                         const selected = form.watch('boardId') === board.id;
                         return (
                           <button
                             key={board.id}
                             type="button"
+                            aria-pressed={selected}
                             onClick={() => form.setValue('boardId', board.id, { shouldValidate: true })}
                             className="focus-ring"
                             style={{
@@ -446,7 +500,7 @@ export function SubmitFeedbackModal({
                       })}
                     </div>
                     {form.formState.errors.boardId && (
-                      <p style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 6 }}>
+                      <p id={ids.boardError} style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 6 }}>
                         {form.formState.errors.boardId.message}
                       </p>
                     )}
@@ -454,6 +508,7 @@ export function SubmitFeedbackModal({
 
                   <div>
                     <label
+                      htmlFor={ids.tags}
                       style={{
                         display: 'block',
                         fontSize: 12,
@@ -475,11 +530,14 @@ export function SubmitFeedbackModal({
                       </span>
                     </label>
                     <input
-                      {...form.register('tags')}
+                      {...bindField('tags')}
+                      id={ids.tags}
                       placeholder="api, integration, auth"
-                      style={{ ...fieldStyle(), fontFamily: 'var(--font-mono)', fontSize: 13 }}
-                      onFocus={focusStyle}
-                      onBlur={blurStyle(false)}
+                      style={{
+                        ...fieldStyle(false, focusedField === 'tags'),
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 13,
+                      }}
                     />
                   </div>
                 </div>
@@ -654,13 +712,15 @@ export function SubmitFeedbackModal({
                   Cancel
                 </Button>
 
+                {/* Distinct keys: if React reused one DOM node, the click on "Next" (step 2 → 3)
+                    would land on a node that had already become type="submit". */}
                 {step < 3 ? (
-                  <Button type="button" variant="primary" size="sm" onClick={nextStep}>
+                  <Button key="next" type="button" variant="primary" size="sm" onClick={() => void nextStep()}>
                     Next
                     <ChevronRight size={14} />
                   </Button>
                 ) : (
-                  <Button type="submit" variant="primary" size="sm" disabled={isPending}>
+                  <Button key="submit" type="submit" variant="primary" size="sm" disabled={isPending}>
                     {isPending && <Loader2 size={13} className="animate-spin" />}
                     {isPending ? 'Submitting…' : 'Submit feedback'}
                   </Button>

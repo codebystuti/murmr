@@ -13,6 +13,7 @@ import { useCommentsByAuthor } from '@/features/comments/hooks/useCommentsByAuth
 import { useDeleteComment } from '@/features/comments/hooks/useComments';
 import { useUpdateUser } from '@/features/users/hooks/useUpdateUser';
 import { useAuth } from '@/hooks/useAuth';
+import { useEnterReveal, enterDelay } from '@/hooks/useEnterReveal';
 import { canDelete, canDeleteComment } from '@/lib/authorization';
 import { formatRelativeTime, formatNumber, getInitials } from '@/lib/utils';
 import type { Post, Comment, User } from '@/types';
@@ -172,11 +173,11 @@ function ProfilePostRow({ post }: { post: Post }) {
           navigate(`/app/post/${post.id}`);
         }
       }}
-      className="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--elev)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+      className="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--elev)] active:bg-[color-mix(in_oklab,var(--elev)_55%,var(--border))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
       style={{ border: '1px solid transparent', transition: 'all var(--dur-ui)', cursor: 'pointer' }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', marginBottom: 4, lineHeight: 1.35 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', marginBottom: 4, lineHeight: 1.35, overflowWrap: 'anywhere' }}>
           {post.title}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -257,7 +258,7 @@ function ProfileCommentRow({ comment, postTitle, currentUser }: { comment: Comme
           navigate(`/app/post/${comment.postId}`);
         }
       }}
-      className="p-3 rounded-xl hover:bg-[var(--elev)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+      className="p-3 rounded-xl hover:bg-[var(--elev)] active:bg-[color-mix(in_oklab,var(--elev)_55%,var(--border))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
       style={{ border: '1px solid transparent', transition: 'all var(--dur-ui)', cursor: 'pointer' }}
     >
       {postTitle && (
@@ -266,7 +267,7 @@ function ProfileCommentRow({ comment, postTitle, currentUser }: { comment: Comme
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-        <p style={{ fontSize: 13, color: 'var(--tx)', margin: 0, lineHeight: 1.5, flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13, color: 'var(--tx)', margin: 0, lineHeight: 1.5, flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
           {comment.body}
         </p>
         <div style={{ display: 'flex', gap: 4, flexShrink: 0, alignItems: 'center' }}>
@@ -316,10 +317,13 @@ function ProfileCommentRow({ comment, postTitle, currentUser }: { comment: Comme
 }
 
 // ── Main page ──────────────────────────────────────────────────────
+function TabPanel({ children }: { children: ReactNode }) {
+  return <div>{children}</div>;
+}
+
 export default function ProfilePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const shouldReduceMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
   const [editOpen, setEditOpen] = useState(false);
 
@@ -338,24 +342,26 @@ export default function ProfilePage() {
 
   const postMap = useMemo(() => new Map(allPosts.map((p) => [p.id, p.title])), [allPosts]);
 
-  function TabPanel({ children }: { children: ReactNode }) {
-    return <div>{children}</div>;
-  }
+  // The header shows post/comment counts, so it waits for both queries like the rows do.
+  const ready = !postsLoading && !commentsLoading;
+  const revealRef = useEnterReveal<HTMLDivElement>(ready);
 
   if (!user) return null;
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ flex: 1 }}>
+    <div ref={revealRef} className="flex flex-col overflow-hidden" style={{ flex: 1 }}>
       <Topbar title="Profile" />
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '24px 24px', boxSizing: 'border-box' }}>
           {/* Profile header */}
-          <motion.div
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: shouldReduceMotion ? 0.01 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-            style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, padding: 24, borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)' }}
+          {!ready ? (
+            <div key="header-skeleton" className="animate-pulse" style={{ height: 106, marginBottom: 24, borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)' }} />
+          ) : (
+          <div
+            key="header"
+            className="murmr-enter"
+            style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, padding: 24, borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)', '--enter-delay': enterDelay(0) } as React.CSSProperties}
           >
             {/* Avatar */}
             <div
@@ -424,7 +430,8 @@ export default function ProfilePage() {
               <Pencil size={13} />
               Edit
             </Button>
-          </motion.div>
+          </div>
+          )}
 
           {/* Tabs */}
           <div
@@ -471,7 +478,7 @@ export default function ProfilePage() {
           {/* Tab content */}
           {activeTab === 'posts' && (
             <TabPanel>
-              {postsLoading ? (
+              {!ready ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="animate-pulse" style={{ height: 64, borderRadius: 12, background: 'var(--surface)', opacity: 1 - i * 0.2 }} />
@@ -481,8 +488,10 @@ export default function ProfilePage() {
                 <EmptyTabState icon={<FileText size={20} style={{ color: 'var(--tx3)' }} />} label="No posts yet" sub="Your submitted posts will appear here." action={<Button variant="primary" size="sm" onClick={() => navigate('/app/board')}>Browse board</Button>} />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {myPosts.map((post) => (
-                    <ProfilePostRow key={post.id} post={post} />
+                  {myPosts.map((post, i) => (
+                    <div key={post.id} className="murmr-enter" style={{ '--enter-delay': enterDelay(i, 160) } as React.CSSProperties}>
+                      <ProfilePostRow post={post} />
+                    </div>
                   ))}
                 </div>
               )}
@@ -491,7 +500,7 @@ export default function ProfilePage() {
 
           {activeTab === 'comments' && (
             <TabPanel>
-              {commentsLoading ? (
+              {!ready ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="animate-pulse" style={{ height: 56, borderRadius: 12, background: 'var(--surface)', opacity: 1 - i * 0.2 }} />
@@ -501,8 +510,10 @@ export default function ProfilePage() {
                 <EmptyTabState icon={<MessageCircle size={20} style={{ color: 'var(--tx3)' }} />} label="No comments yet" sub="Comments you've left will appear here." />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {myComments.map((comment) => (
-                    <ProfileCommentRow key={comment.id} comment={comment} postTitle={postMap.get(comment.postId)} currentUser={user} />
+                  {myComments.map((comment, i) => (
+                    <div key={comment.id} className="murmr-enter" style={{ '--enter-delay': enterDelay(i, 160) } as React.CSSProperties}>
+                      <ProfileCommentRow comment={comment} postTitle={postMap.get(comment.postId)} currentUser={user} />
+                    </div>
                   ))}
                 </div>
               )}
@@ -511,7 +522,7 @@ export default function ProfilePage() {
 
           {activeTab === 'upvoted' && (
             <TabPanel>
-              {postsLoading ? (
+              {!ready ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="animate-pulse" style={{ height: 64, borderRadius: 12, background: 'var(--surface)', opacity: 1 - i * 0.2 }} />
@@ -521,8 +532,10 @@ export default function ProfilePage() {
                 <EmptyTabState icon={<ChevronUp size={20} style={{ color: 'var(--tx3)' }} />} label="No upvoted posts" sub="Posts you upvote will appear here." action={<Button variant="primary" size="sm" onClick={() => navigate('/app/board')}>Browse board</Button>} />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {upvotedPosts.map((post) => (
-                    <ProfilePostRow key={post.id} post={post} />
+                  {upvotedPosts.map((post, i) => (
+                    <div key={post.id} className="murmr-enter" style={{ '--enter-delay': enterDelay(i, 160) } as React.CSSProperties}>
+                      <ProfilePostRow post={post} />
+                    </div>
                   ))}
                 </div>
               )}

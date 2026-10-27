@@ -1,4 +1,5 @@
-import { motion, useReducedMotion } from 'framer-motion';
+import { MotionConfig, motion, useReducedMotion } from 'framer-motion';
+import { mainThreadMotion } from '@/lib/motion';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -37,6 +38,7 @@ export function AuthCard({ children }: AuthCardProps) {
   const innerInitial = prefersReduced ? 'visible' : 'hidden';
 
   return (
+    <MotionConfig {...mainThreadMotion}>
     <motion.div
       initial={outerInitial}
       animate={outerAnimate}
@@ -82,5 +84,6 @@ export function AuthCard({ children }: AuthCardProps) {
         </motion.div>
       </div>
     </motion.div>
+    </MotionConfig>
   );
 }

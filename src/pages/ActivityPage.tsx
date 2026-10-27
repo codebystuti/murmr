@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Zap } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { useActivity } from '@/features/activity/hooks/useActivity';
-import { useUserMap } from '@/hooks/useUserMap';
+import { useUserMap, useUsersLoading } from '@/hooks/useUserMap';
+import { useEnterReveal, enterDelay } from '@/hooks/useEnterReveal';
+import { useInsertAnimation } from '@/hooks/useInsertAnimation';
 import { useActivityStore } from '@/lib/activity-store';
 import { formatRelativeTime, getInitials } from '@/lib/utils';
 import type { ActivityEvent } from '@/types';
@@ -25,10 +26,19 @@ const ACTION_COLOR: Record<ActivityEvent['action'], string> = {
   status_changed: 'var(--status-progress)',
 };
 
+/** Rows that arrive while the page is open grow in; rows there at first paint use the page entrance fade. */
+function ActivityRowSlot({ event, index, isLive }: { event: ActivityEvent; index: number; isLive: boolean }) {
+  const ref = useInsertAnimation<HTMLDivElement>(isLive);
+  return (
+    <div ref={ref}>
+      <ActivityRow event={event} index={index} />
+    </div>
+  );
+}
+
 function ActivityRow({ event, index }: { event: ActivityEvent; index: number }) {
   const navigate = useNavigate();
   const userMap = useUserMap();
-  const shouldReduceMotion = useReducedMotion();
   const user = userMap.get(event.userId);
   const accentColor = ACTION_COLOR[event.action];
 
@@ -44,21 +54,14 @@ function ActivityRow({ event, index }: { event: ActivityEvent; index: number }) 
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -16 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{
-        duration: shouldReduceMotion ? 0.01 : 1.2,
-        delay: shouldReduceMotion ? 0 : Math.min(index * 0.08, 1.0),
-        ease: [0.16, 1, 0.3, 1],
-      }}
+    <div
       role="button"
       tabIndex={0}
       aria-label={`View post: ${event.targetTitle}`}
       onClick={handleNavigate}
       onKeyDown={handleKeyDown}
-      className="flex items-start gap-3 p-3 rounded-xl cursor-pointer hover:bg-[var(--elev)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg)]"
-      style={{ transition: 'all var(--dur-ui) var(--ease-out-expo)' }}
+      className="murmr-enter flex items-start gap-3 p-3 rounded-xl cursor-pointer hover:bg-[var(--elev)] active:bg-[color-mix(in_oklab,var(--elev)_55%,var(--border))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg)]"
+      style={{ transition: 'background var(--dur-ui) var(--ease-out-expo), transform var(--dur-ui) var(--ease-out-expo)', '--enter-delay': enterDelay(index) } as React.CSSProperties}
     >
       {/* Avatar */}
       <div
@@ -127,25 +130,40 @@ function ActivityRow({ event, index }: { event: ActivityEvent; index: number }) 
           marginTop: 6,
         }}
       />
-    </motion.div>
+    </div>
   );
 }
 
 export default function ActivityPage() {
-  const { data: events = [], isLoading } = useActivity(60);
-  const { unseenCount, markSeen } = useActivityStore();
+  const { data: events = [], isLoading: eventsLoading } = useActivity(60);
+  const usersLoading = useUsersLoading();
+  const isLoading = eventsLoading || usersLoading;
+  const revealRef = useEnterReveal<HTMLDivElement>(!isLoading);
+  // Events that arrived since the last visit: shown as 'N new' for this visit, then counted as seen.
+  const [newThisVisit] = useState(() => useActivityStore.getState().unseenCount);
+  const markSeen = useActivityStore((s) => s.markSeen);
 
   useEffect(() => {
     markSeen();
+    // Events arriving while the page is open are seen as they appear, so the unseen count stays at 0.
+    return useActivityStore.subscribe((state) => {
+      if (state.unseenCount > 0) queueMicrotask(() => useActivityStore.getState().markSeen());
+    });
   }, [markSeen]);
 
+  // Ids on screen when the list first rendered; anything else mounted later is a live arrival.
+  const [initialIds, setInitialIds] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    if (!isLoading && initialIds === null) setInitialIds(new Set(events.map((e) => e.id)));
+  }, [isLoading, initialIds, events]);
+
   return (
-    <div className="flex flex-col overflow-hidden" style={{ flex: 1, background: 'var(--bg)' }}>
+    <div ref={revealRef} className="flex flex-col overflow-hidden" style={{ flex: 1, background: 'var(--bg)' }}>
       <Topbar
         title="Activity"
         sub={isLoading ? 'Loading…' : `${events.length} recent events`}
         action={
-          unseenCount > 0 ? (
+          newThisVisit > 0 ? (
             <div
               style={{
                 display: 'inline-flex',
@@ -161,7 +179,7 @@ export default function ActivityPage() {
               }}
             >
               <Zap size={12} />
-              {unseenCount} new
+              {newThisVisit} new
             </div>
           ) : undefined
         }
@@ -220,7 +238,12 @@ export default function ActivityPage() {
         ) : (
           <div style={{ maxWidth: 680, margin: '0 auto', width: '100%' }}>
             {events.map((event, i) => (
-              <ActivityRow key={event.id} event={event} index={i} />
+              <ActivityRowSlot
+                key={event.id}
+                event={event}
+                index={i}
+                isLive={initialIds !== null && !initialIds.has(event.id)}
+              />
             ))}
           </div>
         )}

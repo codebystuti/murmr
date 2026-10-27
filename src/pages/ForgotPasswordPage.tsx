@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [emailFound, setEmailFound] = useState(false);
 
-  const form = useForm<FormData>({ resolver: zodResolver(schema) });
+  const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { email: '' } });
 
   async function onSubmit(data: FormData) {
     setLoading(true);
@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
                   to="/reset-password?token=demo-reset-token"
                   style={{ fontSize: 13, color: 'var(--grad-1)', textDecoration: 'none', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >
-                  Click here to open the reset page
+                  Open the demo reset page
                   <ArrowRight size={16} />
                 </Link>
               </motion.div>
@@ -139,7 +139,7 @@ export default function ForgotPasswordPage() {
             </motion.p>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'contents' }}>
+              <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'contents' }} noValidate>
                 <motion.div variants={itemVariants}>
                   <FormField
                     control={form.control}

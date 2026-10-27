@@ -1,5 +1,6 @@
-import { queryClient } from './queryClient';
+import { queryClient, TOGGLE_UPVOTE_KEY } from './queryClient';
 import { STORAGE_KEYS } from './seed';
+import { storage, writeList } from './api/storage';
 import { generateId } from './utils';
 import { useActivityStore } from './activity-store';
 import { useAuthStore } from '@/features/auth/store';
@@ -30,17 +31,27 @@ const COMMENT_TEMPLATES = [
 ];
 
 function pushActivity(event: ActivityEvent) {
-  const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITY);
-  const feed: ActivityEvent[] = raw ? JSON.parse(raw) : [];
+  const feed = storage.activity();
   feed.unshift(event);
-  localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify(feed.slice(0, 100)));
+  writeList(STORAGE_KEYS.ACTIVITY, feed.slice(0, 100));
   queryClient.invalidateQueries({ queryKey: ['activity'] });
   useActivityStore.getState().increment();
 }
 
+/**
+ * Refreshes post data after a simulated change. The open post page reads ['post', id], so that is
+ * refreshed too. While the user's own upvote is in flight the caches are only marked stale: a refetch
+ * landing before the vote is saved would briefly show the old count, and the vote's onSettled
+ * refetches them anyway.
+ */
+function invalidatePosts() {
+  const refetchType = queryClient.isMutating({ mutationKey: TOGGLE_UPVOTE_KEY }) > 0 ? 'none' : 'active';
+  queryClient.invalidateQueries({ queryKey: ['posts'], refetchType });
+  queryClient.invalidateQueries({ queryKey: ['post'], refetchType });
+}
+
 function addComment(userId: string, post: Post) {
-  const raw = localStorage.getItem(STORAGE_KEYS.COMMENTS);
-  const comments: Comment[] = raw ? JSON.parse(raw) : [];
+  const comments = storage.comments();
 
   const comment: Comment = {
     id: generateId('comment'),
@@ -51,27 +62,21 @@ function addComment(userId: string, post: Post) {
     updatedAt: new Date().toISOString(),
   };
   comments.push(comment);
-  localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(comments));
+  writeList(STORAGE_KEYS.COMMENTS, comments);
 
-  const postsRaw = localStorage.getItem(STORAGE_KEYS.POSTS);
-  if (postsRaw) {
-    const posts: Post[] = JSON.parse(postsRaw);
-    const idx = posts.findIndex((p) => p.id === post.id);
-    if (idx !== -1) {
-      posts[idx].commentCount = (posts[idx].commentCount ?? 0) + 1;
-      localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts));
-    }
+  const posts = storage.posts();
+  const idx = posts.findIndex((p) => p.id === post.id);
+  if (idx !== -1) {
+    posts[idx].commentCount = (posts[idx].commentCount ?? 0) + 1;
+    writeList(STORAGE_KEYS.POSTS, posts);
   }
 
   queryClient.invalidateQueries({ queryKey: ['comments'] });
-  queryClient.invalidateQueries({ queryKey: ['posts'] });
+  invalidatePosts();
 }
 
 function addUpvote(userId: string, post: Post): boolean {
-  const postsRaw = localStorage.getItem(STORAGE_KEYS.POSTS);
-  if (!postsRaw) return false;
-
-  const posts: Post[] = JSON.parse(postsRaw);
+  const posts = storage.posts();
   const idx = posts.findIndex((p) => p.id === post.id);
   if (idx === -1) return false;
 
@@ -79,47 +84,51 @@ function addUpvote(userId: string, post: Post): boolean {
 
   posts[idx].upvotedBy.push(userId);
   posts[idx].upvotes += 1;
-  localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts));
-  queryClient.invalidateQueries({ queryKey: ['posts'] });
+  writeList(STORAGE_KEYS.POSTS, posts);
+  invalidatePosts();
   return true;
+}
+
+/** One simulated event. Returns without doing anything when there is nothing to act on. */
+function tick() {
+  const users = storage.users();
+  const posts = storage.posts();
+  const currentUserId = useAuthStore.getState().user?.id;
+  const otherUsers = users.filter((u) => u.id !== currentUserId);
+  if (otherUsers.length === 0 || posts.length === 0) return;
+
+  const user = otherUsers[getRandomInt(0, otherUsers.length - 1)];
+  const post = posts[getRandomInt(0, Math.min(posts.length - 1, 9))];
+  const action = ACTIONS[getRandomInt(0, ACTIONS.length - 1)];
+
+  if (action === 'commented') {
+    addComment(user.id, post);
+  } else if (action === 'upvoted') {
+    if (!addUpvote(user.id, post)) return;
+  }
+
+  pushActivity({
+    id: generateId('act'),
+    userId: user.id,
+    action,
+    targetId: post.id,
+    targetTitle: post.title,
+    timestamp: new Date().toISOString(),
+  });
 }
 
 function schedule() {
   const delay = getRandomInt(20_000, 30_000);
   timer = setTimeout(() => {
-    const usersRaw = localStorage.getItem(STORAGE_KEYS.USERS);
-    const postsRaw = localStorage.getItem(STORAGE_KEYS.POSTS);
-    if (!usersRaw || !postsRaw) {
-      schedule();
-      return;
+    // Always reschedule, even if this tick throws, so one bad event can't end the feed.
+    try {
+      tick();
+    } catch (err) {
+      console.warn('[murmr] Activity simulator tick failed:', err);
+    } finally {
+      // Paused while the tab was hidden (the handler cleared the timer): don't restart here.
+      if (timer !== null) schedule();
     }
-
-    const users = JSON.parse(usersRaw);
-    const posts = JSON.parse(postsRaw);
-    const currentUserId = useAuthStore.getState().user?.id;
-    const otherUsers = users.filter((u: { id: string }) => u.id !== currentUserId);
-    if (otherUsers.length === 0 || posts.length === 0) { schedule(); return; }
-
-    const user = otherUsers[getRandomInt(0, otherUsers.length - 1)];
-    const post = posts[getRandomInt(0, Math.min(posts.length - 1, 9))];
-    const action = ACTIONS[getRandomInt(0, ACTIONS.length - 1)];
-
-    if (action === 'commented') {
-      addComment(user.id, post);
-    } else if (action === 'upvoted') {
-      if (!addUpvote(user.id, post)) { schedule(); return; }
-    }
-
-    pushActivity({
-      id: generateId('act'),
-      userId: user.id,
-      action,
-      targetId: post.id,
-      targetTitle: post.title,
-      timestamp: new Date().toISOString(),
-    });
-
-    schedule();
   }, delay);
 }
 

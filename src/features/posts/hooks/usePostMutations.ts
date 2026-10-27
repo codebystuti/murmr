@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { postsApi } from '@/lib/api';
+import { TOGGLE_UPVOTE_KEY } from '@/lib/queryClient';
 import type { Post } from '@/types';
 
 export function useToggleUpvote() {
   const qc = useQueryClient();
 
   return useMutation({
+    mutationKey: TOGGLE_UPVOTE_KEY,
     mutationFn: ({ postId, userId }: { postId: string; userId: string }) =>
       postsApi.toggleUpvote(postId, userId),
 
@@ -104,8 +106,16 @@ export function useDeletePost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => postsApi.remove(id),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
+      // Drop the post everywhere right away, so cached lists and a revisited link never show it again.
+      qc.getQueriesData<Post[]>({ queryKey: ['posts'] }).forEach(([key, data]) => {
+        if (data) qc.setQueryData(key, data.filter((p) => p.id !== id));
+      });
+      qc.removeQueries({ queryKey: ['post', id], exact: true });
+      qc.removeQueries({ queryKey: ['comments', id], exact: true });
       qc.invalidateQueries({ queryKey: ['posts'] });
+      // Its comments were deleted with it, so the profile's comment list changes too.
+      qc.invalidateQueries({ queryKey: ['comments', 'author'] });
       toast.success('Post deleted.');
     },
     onError: () => toast.error('Failed to delete post.'),

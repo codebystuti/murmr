@@ -78,6 +78,18 @@
 }
 
 /* ── App theme tokens — toggled via data-theme on <html> ─────── */
+/* Registered as <color> so the tokens themselves can animate. The theme toggle then runs ONE
+   animation on <html> that every var() consumer follows, instead of starting a transition on every
+   element on the page — which janked heavy pages (Board) and left their borders out of step. */
+@property --bg      { syntax: '<color>'; inherits: true; initial-value: #08070D; }
+@property --surface { syntax: '<color>'; inherits: true; initial-value: #11101A; }
+@property --elev    { syntax: '<color>'; inherits: true; initial-value: #1A1825; }
+@property --border  { syntax: '<color>'; inherits: true; initial-value: #2A2638; }
+@property --border-2 { syntax: '<color>'; inherits: true; initial-value: #3A3650; }
+@property --tx      { syntax: '<color>'; inherits: true; initial-value: #F4F2FA; }
+@property --tx2     { syntax: '<color>'; inherits: true; initial-value: #A8A2BD; }
+@property --tx3     { syntax: '<color>'; inherits: true; initial-value: #9790AC; }
+
 [data-theme='dark'] {
   --bg:      #08070D;
   --surface: #11101A;
@@ -88,6 +100,9 @@
   --tx2:     #A8A2BD;
   --tx3:     #9790AC; /* mirrors --text-tertiary; 6.60:1 on #08070D */
   --shadow:  0 12px 40px -10px rgba(0, 0, 0, 0.5);
+  /* Status-pill text: mixed toward this ink by this amount (tokens stay unchanged). */
+  --status-ink: #000000;
+  --status-ink-mix: 0%;
 }
 
 [data-theme='light'] {
@@ -100,21 +115,32 @@
   --tx2:     #5C5870;
   --tx3:     #72698A; /* raised from #8C879F (3.31:1) → 4.91:1 on #FAFAFC, meets WCAG AA */
   --shadow:  0 12px 40px -10px rgba(15, 14, 26, 0.08);
+  /* Status colours are too light to read as small text on white; darken the text only. */
+  --status-ink: #0F0E1A;
+  --status-ink-mix: 45%;
 }
 
 /* ── Theme transition — only active during toggle ──────────────── */
-.theme-transitioning,
+/* Animate the tokens on <html>; every element that reads them updates in lockstep, so each page
+   cross-fades at exactly the same rate regardless of how many elements it has. */
+.theme-transitioning {
+  transition:
+    --bg 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    --surface 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    --elev 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    --border 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    --border-2 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    --tx 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    --tx2 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    --tx3 400ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+/* Elements must not run their own colour transitions on top of the animating tokens: chasing a
+   moving value adds a per-element lag, which is what made busy pages drift out of step. */
 .theme-transitioning *,
 .theme-transitioning *::before,
 .theme-transitioning *::after {
-  transition:
-    background-color 500ms ease-out !important,
-    color 500ms ease-out !important,
-    border-color 500ms ease-out !important,
-    fill 500ms ease-out !important,
-    stroke 500ms ease-out !important;
+  transition-property: none !important;
 }
-
 /* ── Base resets ────────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -294,6 +320,21 @@ button {
 ::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
+/* App scrollbars (the landing keeps the dark-only rule above).
+   Scrollbar pseudo-elements are not matched by `.theme-transitioning *`, so a themed colour here
+   would snap while the page cross-fades. A transparent track shows the easing page behind it, and
+   one translucent grey thumb reads correctly on both themes, so nothing jumps on a theme toggle. */
+.murmr-app,
+.murmr-app * {
+  scrollbar-color: rgba(128, 122, 150, 0.45) transparent;
+}
+.murmr-app ::-webkit-scrollbar-track,
+.murmr-app::-webkit-scrollbar-track { background: transparent; }
+.murmr-app ::-webkit-scrollbar-thumb,
+.murmr-app::-webkit-scrollbar-thumb { background: rgba(128, 122, 150, 0.45); }
+.murmr-app ::-webkit-scrollbar-thumb:hover,
+.murmr-app::-webkit-scrollbar-thumb:hover { background: rgba(128, 122, 150, 0.7); }
+
 /* ── Selection ────────────────────────────────────────────────── */
 ::selection {
   background: color-mix(in oklab, var(--grad-2) 50%, transparent);
@@ -368,6 +409,32 @@ button {
   animation: murmr-sidebar-in 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Horizontally scrollable rows (tab bars, chip rows) that shouldn't show a scrollbar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch screens: an invisible hit area of at least 44×44px around small controls. Nothing visual changes.
+   The element becomes a positioning context, so only use it on controls without their own ::after. */
+@media (pointer: coarse) {
+  .hit-44 {
+    position: relative;
+  }
+  .hit-44::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
+
 /* ── Orb rotation ────────────────────────────────────────────── */
 @keyframes orbSpin {
   from { transform: rotate(0deg); }
@@ -437,6 +504,11 @@ button {
 .cta:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--grad-1);
+}
+/* In the app the gap between button and ring must be the current background. The rule above uses
+   the dark-only marketing token, which drew a dark ring on the light theme. Landing is unaffected. */
+.murmr-app .cta:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--grad-1);
 }
 .cta:disabled,
 .cta[aria-disabled="true"] {

@@ -1,11 +1,13 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronDown, MessageSquare, ChevronUp } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePosts } from '@/features/posts/hooks/usePosts';
 import { useUpdateStatus } from '@/features/posts/hooks/usePostMutations';
-import { useUserMap } from '@/hooks/useUserMap';
+import { useUserMap, useUsersLoading } from '@/hooks/useUserMap';
+import { useEnterReveal, enterDelay } from '@/hooks/useEnterReveal';
+import { useInsertAnimation } from '@/hooks/useInsertAnimation';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/lib/authorization';
 import { formatRelativeTime, formatNumber } from '@/lib/utils';
@@ -24,19 +26,22 @@ interface RoadmapCardProps {
   post: Post;
   authorName?: string;
   adminMode: boolean;
+  delay: string;
+  onStatusMoved: (status: PostStatus) => void;
 }
 
-function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
+function RoadmapCard({ post, authorName, adminMode, delay, onStatusMoved }: RoadmapCardProps) {
   const navigate = useNavigate();
   const { mutate: updateStatus } = useUpdateStatus();
   const [menuOpen, setMenuOpen] = useState(false);
-  const shouldReduceMotion = useReducedMotion();
 
   function handleNavigate() {
     navigate(`/app/post/${post.id}`);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    // Keys pressed on the status chevron or its menu bubble up here; only the card itself opens the post.
+    if (e.target !== e.currentTarget) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       handleNavigate();
@@ -44,6 +49,7 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
   }
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -51,6 +57,8 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
       if (e.key === 'Escape') {
         e.stopPropagation();
         setMenuOpen(false);
+        // Keep keyboard focus on the card's chevron instead of dropping it to <body>.
+        triggerRef.current?.focus();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -63,27 +71,26 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
   function handleStatusChange(status: PostStatus) {
     updateStatus({ id: post.id, status });
     setMenuOpen(false);
+    // Stacked view: reveal where the card just went, so it doesn't look like it vanished.
+    onStatusMoved(status);
   }
 
   return (
-    <motion.div
-      layout={!shouldReduceMotion}
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.97 }}
-      transition={{ duration: shouldReduceMotion ? 0.01 : 1.2, ease: [0.16, 1, 0.3, 1] }}
+    <div
       role="button"
       tabIndex={0}
       aria-label={`Open post: ${post.title}`}
       onClick={handleNavigate}
       onKeyDown={handleKeyDown}
-      className="bg-[var(--surface)] border border-[var(--border)] rounded-xl hover:border-[var(--border-2)] hover:bg-[var(--elev)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+      className="murmr-enter bg-[var(--surface)] border border-[var(--border)] rounded-xl hover:border-[var(--border-2)] hover:bg-[var(--elev)] active:bg-[color-mix(in_oklab,var(--elev)_55%,var(--border))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
       style={{
         padding: 16,
         cursor: 'pointer',
-        transition: 'all var(--dur-ui) var(--ease-out-expo)',
+        transition: 'background var(--dur-ui) var(--ease-out-expo), border-color var(--dur-ui) var(--ease-out-expo), box-shadow var(--dur-ui) var(--ease-out-expo), transform var(--dur-ui) var(--ease-out-expo)',
         position: 'relative',
-      }}
+        zIndex: menuOpen ? 30 : undefined,
+        '--enter-delay': delay,
+      } as React.CSSProperties}
     >
       {/* Admin status changer */}
       {adminMode && (
@@ -92,10 +99,13 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
           onClick={(e) => e.stopPropagation()}
         >
           <button
+            ref={triggerRef}
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
             aria-label="Change status"
-            className="text-[var(--tx3)] hover:text-[var(--tx)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)]"
+            aria-haspopup="listbox"
+            aria-expanded={menuOpen}
+            className="hit-44 text-[var(--tx3)] hover:text-[var(--tx)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--grad-1)]"
             style={{
               background: 'none',
               border: 'none',
@@ -104,26 +114,22 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
               borderRadius: 6,
               display: 'flex',
               alignItems: 'center',
-              transition: 'all var(--dur-ui)',
+              transition: 'color var(--dur-ui) var(--ease-out-expo)',
             }}
           >
             <ChevronDown size={14} />
           </button>
 
-          <AnimatePresence>
-            {menuOpen && (
+          {menuOpen && (
               <>
                 <div
                   style={{ position: 'fixed', inset: 0, zIndex: 10 }}
                   onClick={() => setMenuOpen(false)}
                 />
-                <motion.div
+                <div
                   ref={dropdownRef}
-                  initial={{ opacity: 0, y: -4, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.97 }}
-                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                   style={{
+                    animation: 'murmr-menu-in 160ms cubic-bezier(0.16, 1, 0.3, 1)',
                     position: 'absolute',
                     top: 'calc(100% + 4px)',
                     right: 0,
@@ -173,14 +179,13 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
                       </button>
                     );
                   })}
-                </motion.div>
+                </div>
               </>
             )}
-          </AnimatePresence>
         </div>
       )}
 
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', lineHeight: 1.35, marginBottom: 6, paddingRight: adminMode ? 24 : 0 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', lineHeight: 1.35, marginBottom: 6, paddingRight: adminMode ? 24 : 0, overflowWrap: 'anywhere' }}>
         {post.title}
       </div>
 
@@ -195,6 +200,7 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
+            overflowWrap: 'anywhere',
           }}
         >
           {post.body}
@@ -230,7 +236,7 @@ function RoadmapCard({ post, authorName, adminMode }: RoadmapCardProps) {
           {formatRelativeTime(post.createdAt)}
         </span>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -241,96 +247,167 @@ interface ColumnProps {
   adminMode: boolean;
   userMap: Map<string, { name: string }>;
   index: number;
+  onStatusMoved: (status: PostStatus) => void;
 }
 
-function RoadmapColumn({ label, color, posts, adminMode, userMap, index }: ColumnProps) {
-  const shouldReduceMotion = useReducedMotion();
+interface ColumnLayout {
+  /** Below 1024px columns stack vertically as collapsible sections. */
+  stacked: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+  /** True when a section is opened after the page's first render, so its cards grow in. */
+  animateExpand: boolean;
+}
 
+function SectionBody({ animate, id, children }: { animate: boolean; id: string; children: React.ReactNode }) {
+  const ref = useInsertAnimation<HTMLDivElement>(animate);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: shouldReduceMotion ? 0.01 : 1.8,
-        delay: shouldReduceMotion ? 0 : index * 0.2,
-        ease: [0.16, 1, 0.3, 1],
-      }}
-      style={{ flex: '1 1 0', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 8 }}
-    >
-      {/* Column header */}
-      <div
+    <div ref={ref} id={id}>
+      {children}
+    </div>
+  );
+}
+
+function RoadmapColumn({ label, color, posts, adminMode, userMap, index, onStatusMoved, stacked, expanded, onToggle, animateExpand }: ColumnProps & ColumnLayout) {
+  const columnDelay = index * 80;
+  const bodyId = `roadmap-section-${index}`;
+
+  const headerContent = (
+    <>
+      <span
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '10px 0',
-          borderBottom: `2px solid ${color}`,
-          marginBottom: 2,
+          width: 8,
+          height: 8,
+          borderRadius: 999,
+          background: color,
+          flexShrink: 0,
+        }}
+      />
+      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', letterSpacing: '-0.01em' }}>
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: 11,
+          fontFamily: 'var(--font-mono)',
+          color: 'var(--tx3)',
+          marginLeft: 'auto',
         }}
       >
-        <span
+        {posts.length}
+      </span>
+      {stacked && (
+        <ChevronDown
+          size={16}
+          aria-hidden="true"
           style={{
-            width: 8,
-            height: 8,
-            borderRadius: 999,
-            background: color,
+            color: 'var(--tx3)',
             flexShrink: 0,
+            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform var(--dur-ui) var(--ease-out-expo)',
           }}
         />
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', letterSpacing: '-0.01em' }}>
-          {label}
-        </span>
-        <span
+      )}
+    </>
+  );
+
+  const headerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 0',
+    borderBottom: `2px solid ${color}`,
+    marginBottom: 2,
+    '--enter-delay': enterDelay(0, columnDelay),
+  } as React.CSSProperties;
+
+  const cards = (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: stacked ? 'visible' : 'auto', paddingTop: stacked ? 8 : 0 }}>
+        {posts.length === 0 ? (
+          <div
+            className="murmr-enter"
+            style={{
+              padding: '24px 16px',
+              textAlign: 'center',
+              border: '1px dashed var(--border)',
+              borderRadius: 12,
+              color: 'var(--tx3)',
+              fontSize: 12,
+              '--enter-delay': enterDelay(1, columnDelay),
+            } as React.CSSProperties}
+          >
+            No {label.toLowerCase()} posts
+          </div>
+        ) : (
+          posts.map((post, i) => (
+            <RoadmapCard
+              key={post.id}
+              post={post}
+              authorName={userMap.get(post.authorId)?.name}
+              adminMode={adminMode}
+              delay={enterDelay(i + 1, columnDelay)}
+              onStatusMoved={onStatusMoved}
+            />
+          ))
+        )}
+      </div>
+  );
+
+  if (stacked) {
+    return (
+      <section style={{ display: 'flex', flexDirection: 'column' }}>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          aria-controls={bodyId}
+          className="murmr-enter focus-ring-inset hover:bg-[var(--elev)]"
           style={{
-            fontSize: 11,
-            fontFamily: 'var(--font-mono)',
-            color: 'var(--tx3)',
-            marginLeft: 'auto',
+            ...headerStyle,
+            width: '100%',
+            minHeight: 44,
+            padding: '10px 8px',
+            margin: '0 -8px 2px',
+            boxSizing: 'content-box',
+            background: 'transparent',
+            border: 'none',
+            borderBottom: `2px solid ${color}`,
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            textAlign: 'left',
+            fontFamily: 'var(--font-body)',
+            transition: 'background-color var(--dur-ui) var(--ease-out-expo)',
           }}
         >
-          {posts.length}
-        </span>
-      </div>
+          {headerContent}
+        </button>
+        {expanded && (
+          <SectionBody animate={animateExpand} id={bodyId}>
+            {cards}
+          </SectionBody>
+        )}
+      </section>
+    );
+  }
 
-      {/* Cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
-        <AnimatePresence mode="popLayout">
-          {posts.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{
-                padding: '24px 16px',
-                textAlign: 'center',
-                border: '1px dashed var(--border)',
-                borderRadius: 12,
-                color: 'var(--tx3)',
-                fontSize: 12,
-              }}
-            >
-              No {label.toLowerCase()} posts
-            </motion.div>
-          ) : (
-            posts.map((post) => (
-              <RoadmapCard
-                key={post.id}
-                post={post}
-                authorName={userMap.get(post.authorId)?.name}
-                adminMode={adminMode}
-              />
-            ))
-          )}
-        </AnimatePresence>
+  return (
+    <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Column header */}
+      <div className="murmr-enter" style={headerStyle}>
+        {headerContent}
       </div>
-    </motion.div>
+      {cards}
+    </div>
   );
 }
 
 export default function RoadmapPage() {
   const { user } = useAuth();
-  const { data: allPosts = [], isLoading } = usePosts();
+  const { data: allPosts = [], isLoading: postsLoading } = usePosts();
   const userMap = useUserMap();
+  const usersLoading = useUsersLoading();
+  const isLoading = postsLoading || usersLoading;
+  const revealRef = useEnterReveal<HTMLDivElement>(!isLoading);
   const adminMode = isAdmin(user);
 
   const columns = useMemo(() => {
@@ -342,17 +419,37 @@ export default function RoadmapPage() {
     }));
   }, [allPosts]);
 
-  const totalShipped = allPosts.filter((p) => p.status === 'shipped').length;
-  const totalPlanned = allPosts.filter((p) => p.status === 'planned' || p.status === 'progress').length;
+  const [planned, progress, shipped] = columns.map((col) => col.posts.length);
+
+  // Phones and tablets: stacked collapsible sections instead of side-scrolling columns.
+  const stacked = !useMediaQuery('(min-width: 1024px)');
+  const [openSections, setOpenSections] = useState<Set<PostStatus>>(() => new Set<PostStatus>(['planned']));
+  const toggleSection = (status: PostStatus) =>
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
+      return next;
+    });
+  const revealSection = (status: PostStatus) =>
+    setOpenSections((prev) => (prev.has(status) ? prev : new Set(prev).add(status)));
+  // Sections open at first paint use the page entrance fade; ones opened later grow in.
+  const firstContentRender = useRef(true);
+  useEffect(() => {
+    if (!isLoading) firstContentRender.current = false;
+  }, [isLoading]);
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ flex: 1, background: 'var(--bg)' }}>
+    <div ref={revealRef} className="flex flex-col overflow-hidden" style={{ flex: 1, background: 'var(--bg)' }}>
       <Topbar
         title="Roadmap"
         sub={
           isLoading
             ? 'Loading…'
-            : `${totalPlanned} in progress · ${totalShipped} shipped`
+            : stacked
+            ? // The section headers already carry each count; the full breakdown gets truncated here.
+              `${planned + progress + shipped} posts`
+            : `${planned} planned · ${progress} in progress · ${shipped} shipped`
         }
       />
 
@@ -380,12 +477,13 @@ export default function RoadmapPage() {
         <div
           style={{
             display: 'flex',
-            gap: 20,
-            padding: '20px 28px',
+            flexDirection: stacked ? 'column' : 'row',
+            gap: stacked ? 16 : 20,
+            padding: stacked ? '16px 24px 32px' : '20px 28px',
             flex: 1,
-            overflowX: 'auto',
+            overflowX: stacked ? 'hidden' : 'auto',
             overflowY: 'auto',
-            alignItems: 'flex-start',
+            alignItems: stacked ? 'stretch' : 'flex-start',
             WebkitOverflowScrolling: 'touch',
           }}
         >
@@ -398,6 +496,11 @@ export default function RoadmapPage() {
               adminMode={adminMode}
               userMap={userMap}
               index={i}
+              onStatusMoved={revealSection}
+              stacked={stacked}
+              expanded={!stacked || openSections.has(col.status)}
+              onToggle={() => toggleSection(col.status)}
+              animateExpand={!firstContentRender.current}
             />
           ))}
         </div>

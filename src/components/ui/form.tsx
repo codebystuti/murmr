@@ -64,11 +64,22 @@ FormLabel.displayName = 'FormLabel';
 
 const FormControl = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ children, ...props }, ref) => {
-    const { id } = useFormField();
+    const { id, error } = useFormField();
     return (
       <div ref={ref} {...props}>
         {React.isValidElement(children)
-          ? React.cloneElement(children as React.ReactElement<{ id?: string }>, { id })
+          ? React.cloneElement(
+              children as React.ReactElement<{
+                id?: string;
+                'aria-invalid'?: boolean;
+                'aria-describedby'?: string;
+              }>,
+              {
+                id,
+                'aria-invalid': !!error,
+                'aria-describedby': error ? `${id}-message` : undefined,
+              },
+            )
           : children}
       </div>
     );
@@ -78,11 +89,11 @@ FormControl.displayName = 'FormControl';
 
 const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, children, ...props }, ref) => {
-    const { error } = useFormField();
+    const { error, id } = useFormField();
     const body = error ? String(error.message) : children;
     if (!body) return null;
     return (
-      <p ref={ref} className={cn('text-xs text-red-400', className)} {...props}>
+      <p ref={ref} id={`${id}-message`} className={cn('text-xs text-red-400', className)} {...props}>
         {body}
       </p>
     );

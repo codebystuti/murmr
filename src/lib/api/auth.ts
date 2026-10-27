@@ -1,11 +1,9 @@
 import type { User } from '@/types';
-import { STORAGE_KEYS, ADMIN_USER } from '@/lib/seed';
+import { STORAGE_KEYS } from '@/lib/seed';
 import { delay, generateId } from '@/lib/utils';
+import { storage } from './storage';
 
-function getUsers(): User[] {
-  const raw = localStorage.getItem(STORAGE_KEYS.USERS);
-  return raw ? (JSON.parse(raw) as User[]) : [ADMIN_USER];
-}
+const getUsers = storage.users;
 
 function saveUsers(users: User[]) {
   localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));

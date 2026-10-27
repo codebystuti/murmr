@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { useEffect } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,6 +24,15 @@ interface EditPostModalProps {
 export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) {
   const { mutate: updatePost, isPending } = useUpdatePost();
 
+  const uid = useId();
+  const ids = {
+    title: `${uid}-title`,
+    titleError: `${uid}-title-error`,
+    body: `${uid}-body`,
+    bodyError: `${uid}-body-error`,
+    tags: `${uid}-tags`,
+  };
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -31,17 +40,22 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
       body: post.body,
       tags: post.tags.join(', '),
     },
+    // Validate on blur, then re-validate on change so errors clear as soon as they're fixed.
+    mode: 'onTouched',
   });
 
-  // Reset form when post changes or modal reopens
+  // Load the latest post into the form only when the modal opens. Resetting on every
+  // `post` change would wipe unsaved edits whenever a background refetch lands.
+  const wasOpen = useRef(open);
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpen.current) {
       form.reset({
         title: post.title,
         body: post.body,
         tags: post.tags.join(', '),
       });
     }
+    wasOpen.current = open;
   }, [open, post, form]);
 
   function onSubmit(data: FormData) {
@@ -104,11 +118,14 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
             >
               Edit post
             </Dialog.Title>
+            <Dialog.Description className="sr-only">
+              Update this post&apos;s title, description and tags.
+            </Dialog.Description>
             <Dialog.Close asChild>
               <button
                 type="button"
                 aria-label="Close dialog"
-                className="bg-transparent text-[var(--tx3)] hover:bg-[var(--elev)] hover:text-[var(--tx)] focus-ring"
+                className="bg-transparent text-[var(--tx3)] hover:bg-[var(--elev)] hover:text-[var(--tx)] focus-ring hit-44"
                 style={{
                   width: 28,
                   height: 28,
@@ -127,11 +144,12 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
           </div>
 
           {/* Form */}
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
             <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Title */}
               <div>
                 <label
+                  htmlFor={ids.title}
                   style={{
                     display: 'block',
                     fontSize: 12,
@@ -144,6 +162,9 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
                 </label>
                 <input
                   {...form.register('title')}
+                  id={ids.title}
+                  aria-invalid={!!form.formState.errors.title}
+                  aria-describedby={form.formState.errors.title ? ids.titleError : undefined}
                   className={`input-field${form.formState.errors.title ? ' input-error' : ''}`}
                   style={{
                     width: '100%',
@@ -159,7 +180,7 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
                   }}
                 />
                 {form.formState.errors.title && (
-                  <p style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 4 }}>
+                  <p id={ids.titleError} style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 4 }}>
                     {form.formState.errors.title.message}
                   </p>
                 )}
@@ -168,6 +189,7 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
               {/* Body */}
               <div>
                 <label
+                  htmlFor={ids.body}
                   style={{
                     display: 'block',
                     fontSize: 12,
@@ -180,6 +202,9 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
                 </label>
                 <textarea
                   {...form.register('body')}
+                  id={ids.body}
+                  aria-invalid={!!form.formState.errors.body}
+                  aria-describedby={form.formState.errors.body ? ids.bodyError : undefined}
                   rows={5}
                   className={`input-field${form.formState.errors.body ? ' input-error' : ''}`}
                   style={{
@@ -198,7 +223,7 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
                   }}
                 />
                 {form.formState.errors.body && (
-                  <p style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 4 }}>
+                  <p id={ids.bodyError} style={{ fontSize: 11, color: 'var(--status-error)', marginTop: 4 }}>
                     {form.formState.errors.body.message}
                   </p>
                 )}
@@ -207,6 +232,7 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
               {/* Tags */}
               <div>
                 <label
+                  htmlFor={ids.tags}
                   style={{
                     display: 'block',
                     fontSize: 12,
@@ -229,6 +255,7 @@ export function EditPostModal({ post, open, onOpenChange }: EditPostModalProps) 
                 </label>
                 <input
                   {...form.register('tags')}
+                  id={ids.tags}
                   placeholder="api, integration, auth"
                   className="input-field"
                   style={{

@@ -8,3 +8,6 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+/** Mutation key of the upvote toggle, so background refreshes can tell when a vote is in flight. */
+export const TOGGLE_UPVOTE_KEY = ['toggleUpvote'] as const;

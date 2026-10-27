@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, Loader2, Pencil, Trash2, X, Check } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,8 @@ import { useDeletePost, useUpdateStatus } from '@/features/posts/hooks/usePostMu
 import { useComments } from '@/features/comments/hooks/useComments';
 import { useUserMap } from '@/hooks/useUserMap';
 import { useAuth } from '@/hooks/useAuth';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useEnterReveal, enterDelay } from '@/hooks/useEnterReveal';
 import { canEdit, canDelete, isAdmin as checkIsAdmin } from '@/lib/authorization';
 import { formatRelativeTime, getInitials } from '@/lib/utils';
 import type { PostStatus } from '@/types';
@@ -21,27 +22,69 @@ import { STATUS_META } from '@/types';
 
 const STATUS_ORDER: PostStatus[] = ['open', 'planned', 'progress', 'shipped', 'closed'];
 
+// Comments start right after the "Comments" heading (upvote … heading = 7 steps of the stagger);
+// the comment box below them takes the last slot of the cascade.
+const COMMENTS_DELAY_MS = 7 * 80;
+
+// Phones: icon-only header actions, tighter page padding and the compact upvote, so content gets the width.
+const WIDE_QUERY = '(min-width: 640px)';
+
 export default function PostDetailPage() {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  const isWide = useMediaQuery(WIDE_QUERY);
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [hoveredStatus, setHoveredStatus] = useState<PostStatus | null>(null);
 
-  const shouldReduceMotion = useReducedMotion();
-
   const { data: post, isLoading, error } = usePost(postId ?? '');
   const { data: comments = [], isLoading: commentsLoading } = useComments(postId ?? '');
+  const revealRef = useEnterReveal<HTMLDivElement>(!!post, postId);
+  // Comments load separately; they get their own reveal so they fade in (after the post) instead of popping.
+  const commentsRevealRef = useEnterReveal<HTMLDivElement>(!!post && !commentsLoading, postId, '.murmr-enter-comment');
   const userMap = useUserMap();
   const { mutate: deletePost, isPending: isDeleting } = useDeletePost();
   const { mutate: updateStatus } = useUpdateStatus();
 
+  const deleteTriggerRef = useRef<HTMLButtonElement>(null);
+  const cancelDeleteRef = useRef<HTMLButtonElement>(null);
+  const restoreDeleteFocus = useRef(false);
+  const statusTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // The page stays mounted when the route moves to another post: a pending confirmation or open
+  // status menu belongs to the previous post.
+  useEffect(() => {
+    setConfirmDelete(false);
+    setStatusOpen(false);
+  }, [postId]);
+
+  // Inline delete confirmation: focus lands on Cancel (the safe choice), Esc cancels, and focus returns
+  // to the Delete button afterwards so keyboard users don't lose their place.
+  useEffect(() => {
+    if (!confirmDelete) {
+      if (restoreDeleteFocus.current) deleteTriggerRef.current?.focus();
+      restoreDeleteFocus.current = false;
+      return;
+    }
+    cancelDeleteRef.current?.focus();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      restoreDeleteFocus.current = true;
+      setConfirmDelete(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [confirmDelete]);
+
   useEffect(() => {
     if (!statusOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setStatusOpen(false);
+      if (e.key !== 'Escape') return;
+      setStatusOpen(false);
+      statusTriggerRef.current?.focus();
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
@@ -54,6 +97,20 @@ export default function PostDetailPage() {
   const canDeletePost = post ? canDelete(user, post.authorId) : false;
   const postAuthor = post ? userMap.get(post.authorId) : undefined;
 
+  function cancelDelete() {
+    restoreDeleteFocus.current = true;
+    setConfirmDelete(false);
+  }
+
+  // Shared or new-tab links have no in-app history to go back to: fall back to the board.
+  function handleBack() {
+    if (location.key !== 'default') navigate(-1);
+    else navigate('/app/board');
+  }
+
+  const pagePadding = isWide ? '28px 36px' : '20px 16px';
+  const columnGap = isWide ? 24 : 12;
+
   function handleDelete() {
     if (!postId) return;
     deletePost(postId, {
@@ -65,6 +122,7 @@ export default function PostDetailPage() {
     if (!postId) return;
     updateStatus({ id: postId, status });
     setStatusOpen(false);
+    statusTriggerRef.current?.focus();
   }
 
   // Loading state — skeleton mirrors the real layout
@@ -72,12 +130,12 @@ export default function PostDetailPage() {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <Topbar title="Post" />
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div key="post-skeleton" style={{ flex: 1, overflowY: 'auto' }}>
           <div
             style={{
-              padding: '28px 36px',
+              padding: pagePadding,
               display: 'flex',
-              gap: 24,
+              gap: columnGap,
               maxWidth: 860,
               margin: '0 auto',
               width: '100%',
@@ -89,8 +147,8 @@ export default function PostDetailPage() {
               className="animate-pulse"
               style={{
                 flexShrink: 0,
-                width: 64,
-                height: 80,
+                width: isWide ? 64 : 44,
+                height: isWide ? 80 : 56,
                 borderRadius: 'var(--radius-container)',
                 background: 'var(--elev)',
                 border: '1px solid var(--border)',
@@ -172,85 +230,116 @@ export default function PostDetailPage() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Topbar
         title="Post"
-        sub={post.title.length > 60 ? `${post.title.slice(0, 60)}…` : post.title}
+        // Phones need the header width for the actions; the title is the first thing on the page anyway.
+        sub={isWide ? (post.title.length > 60 ? `${post.title.slice(0, 60)}…` : post.title) : undefined}
         action={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {/* Back button */}
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft size={13} />
-              Board
-            </Button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isWide ? 6 : 8 }}>
+            {/* Back + Edit step aside on phones while the delete confirmation needs the room. */}
+            {(isWide || !confirmDelete) && (
+              <>
+                {/* Back button */}
+                <Button
+                  variant="default"
+                  size={isWide ? 'sm' : 'icon'}
+                  onClick={handleBack}
+                  aria-label={isWide ? undefined : 'Back'}
+                  className={isWide ? undefined : 'hit-44'}
+                >
+                  <ArrowLeft size={13} aria-hidden="true" />
+                  {isWide && 'Back'}
+                </Button>
 
-            {/* Edit */}
-            {canEditPost && (
-              <Button variant="default" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil size={13} />
-                Edit
-              </Button>
+                {/* Edit */}
+                {canEditPost && (
+                  <Button
+                    variant="default"
+                    size={isWide ? 'sm' : 'icon'}
+                    onClick={() => {
+                      setConfirmDelete(false);
+                      setEditOpen(true);
+                    }}
+                    aria-label={isWide ? undefined : 'Edit post'}
+                    className={isWide ? undefined : 'hit-44'}
+                  >
+                    <Pencil size={13} aria-hidden="true" />
+                    {isWide && 'Edit'}
+                  </Button>
+                )}
+              </>
             )}
 
             {/* Delete */}
             {canDeletePost && !confirmDelete && (
               <Button
+                ref={deleteTriggerRef}
                 variant="default"
-                size="sm"
+                size={isWide ? 'sm' : 'icon'}
                 onClick={() => setConfirmDelete(true)}
+                aria-label={isWide ? undefined : 'Delete post'}
+                className={isWide ? undefined : 'hit-44'}
                 style={{ color: 'var(--status-error)', borderColor: 'color-mix(in oklab, var(--status-error) 30%, transparent)' }}
               >
-                <Trash2 size={13} />
-                Delete
+                <Trash2 size={13} aria-hidden="true" />
+                {isWide && 'Delete'}
               </Button>
             )}
 
             {/* Delete confirmation */}
             {confirmDelete && (
               <div
+                role="group"
+                aria-label="Delete this post?"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 10px',
+                  gap: isWide ? 6 : 4,
+                  padding: isWide ? '6px 10px' : '0 4px 0 10px',
                   borderRadius: 8,
                   border: '1px solid color-mix(in oklab, var(--status-error) 30%, transparent)',
                   background: 'color-mix(in oklab, var(--status-error) 8%, transparent)',
                 }}
               >
-                <span style={{ fontSize: 12, color: 'var(--status-error)', fontWeight: 500 }}>
-                  Delete this post?
+                <span style={{ fontSize: 12, color: 'var(--status-error)', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                  {isWide ? 'Delete this post?' : 'Delete?'}
                 </span>
                 <button
                   type="button"
                   onClick={handleDelete}
                   disabled={isDeleting}
                   aria-label="Confirm delete"
+                  className={isWide ? 'focus-ring' : 'focus-ring hit-44'}
                   style={{
                     background: 'none',
                     border: 'none',
                     color: 'var(--status-error)',
-                    cursor: 'pointer',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
                     display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     padding: 2,
-                    outline: 'none',
+                    borderRadius: 6,
+                    ...(isWide ? null : { width: 36, height: 36 }),
                   }}
                 >
                   {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                 </button>
                 <button
+                  ref={cancelDeleteRef}
                   type="button"
-                  onClick={() => setConfirmDelete(false)}
+                  onClick={cancelDelete}
                   aria-label="Cancel delete"
+                  className={isWide ? 'focus-ring' : 'focus-ring hit-44'}
                   style={{
                     background: 'none',
                     border: 'none',
                     color: 'var(--tx3)',
                     cursor: 'pointer',
                     display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     padding: 2,
-                    outline: 'none',
+                    borderRadius: 6,
+                    ...(isWide ? null : { width: 36, height: 36 }),
                   }}
                 >
                   <X size={13} />
@@ -262,15 +351,12 @@ export default function PostDetailPage() {
       />
 
       {/* Main content */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: shouldReduceMotion ? 0.1 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+      <div key={`post-content-${post.id}`} ref={revealRef} style={{ flex: 1, overflowY: 'auto' }}>
+        <div
           style={{
-            padding: '28px 36px',
+            padding: pagePadding,
             display: 'flex',
-            gap: 24,
+            gap: columnGap,
             maxWidth: 860,
             margin: '0 auto',
             width: '100%',
@@ -278,27 +364,33 @@ export default function PostDetailPage() {
           }}
         >
           {/* Big upvote */}
-          <div style={{ flexShrink: 0, paddingTop: 4 }}>
-            <UpvoteButton post={post} big />
+          <div className="murmr-enter" style={{ flexShrink: 0, paddingTop: 4, '--enter-delay': enterDelay(0) } as React.CSSProperties}>
+            <UpvoteButton post={post} big={isWide} />
           </div>
 
           {/* Content */}
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Status row */}
             <div
+              className="murmr-enter"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
                 marginBottom: 12,
                 flexWrap: 'wrap',
-              }}
+                // Lifted while open so the status menu isn't covered by the fading sections below it.
+                position: 'relative',
+                zIndex: statusOpen ? 30 : undefined,
+                '--enter-delay': enterDelay(1),
+              } as React.CSSProperties}
             >
               {/* Status pill — clickable for admins */}
               <div style={{ position: 'relative' }}>
                 {isAdmin ? (
                   <>
                     <button
+                      ref={statusTriggerRef}
                       type="button"
                       onClick={() => setStatusOpen((o) => !o)}
                       className="active:scale-[0.97] focus-ring"
@@ -359,6 +451,7 @@ export default function PostDetailPage() {
                                 onClick={() => handleStatusChange(s)}
                                 onMouseEnter={() => setHoveredStatus(s)}
                                 onMouseLeave={() => setHoveredStatus(null)}
+                                className="focus-ring-inset"
                                 style={{
                                   display: 'flex',
                                   alignItems: 'center',
@@ -379,7 +472,6 @@ export default function PostDetailPage() {
                                   textAlign: 'left',
                                   transition: 'all var(--dur-micro)',
                                   fontFamily: 'var(--font-body)',
-                                  outline: 'none',
                                 }}
                               >
                                 <span
@@ -417,6 +509,7 @@ export default function PostDetailPage() {
 
             {/* Title */}
             <h1
+              className="murmr-enter"
               style={{
                 fontSize: 24,
                 fontWeight: 600,
@@ -425,7 +518,9 @@ export default function PostDetailPage() {
                 margin: '0 0 12px',
                 lineHeight: 1.2,
                 fontFamily: 'var(--font-display)',
-              }}
+                overflowWrap: 'anywhere',
+                '--enter-delay': enterDelay(2),
+              } as React.CSSProperties}
             >
               {post.title}
             </h1>
@@ -433,12 +528,14 @@ export default function PostDetailPage() {
             {/* Author */}
             {postAuthor && (
               <div
+                className="murmr-enter"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
                   marginBottom: 16,
-                }}
+                  '--enter-delay': enterDelay(3),
+                } as React.CSSProperties}
               >
                 <div
                   style={{
@@ -493,13 +590,16 @@ export default function PostDetailPage() {
             {/* Body */}
             {post.body && (
               <p
+                className="murmr-enter"
                 style={{
                   fontSize: 14,
                   color: 'var(--tx2)',
                   lineHeight: 1.7,
                   margin: '0 0 16px',
                   whiteSpace: 'pre-wrap',
-                }}
+                  overflowWrap: 'anywhere',
+                  '--enter-delay': enterDelay(4),
+                } as React.CSSProperties}
               >
                 {post.body}
               </p>
@@ -508,12 +608,14 @@ export default function PostDetailPage() {
             {/* Tags */}
             {post.tags.length > 0 && (
               <div
+                className="murmr-enter"
                 style={{
                   display: 'flex',
                   gap: 8,
                   flexWrap: 'wrap',
                   marginBottom: 24,
-                }}
+                  '--enter-delay': enterDelay(5),
+                } as React.CSSProperties}
               >
                 {post.tags.map((tag) => (
                   <span
@@ -535,10 +637,13 @@ export default function PostDetailPage() {
 
             {/* Comments section */}
             <div
+              ref={commentsRevealRef}
+              className="murmr-enter"
               style={{
                 borderTop: '1px solid var(--border)',
                 paddingTop: 16,
-              }}
+                '--enter-delay': enterDelay(6),
+              } as React.CSSProperties}
             >
               <h2
                 style={{
@@ -582,33 +687,43 @@ export default function PostDetailPage() {
                 </div>
               ) : comments.length === 0 ? (
                 <p
+                  className="murmr-enter-comment"
                   style={{
                     fontSize: 13,
                     color: 'var(--tx3)',
                     margin: '0 0 16px',
-                  }}
+                    '--enter-delay': enterDelay(0, COMMENTS_DELAY_MS),
+                  } as React.CSSProperties}
                 >
                   No comments yet. Be the first to share your thoughts.
                 </p>
               ) : (
                 <div>
-                  {comments.map((comment) => (
-                    <CommentItem
+                  {comments.map((comment, i) => (
+                    <div
                       key={comment.id}
-                      comment={comment}
-                      author={userMap.get(comment.authorId)}
-                      currentUser={user}
-                      isAdmin={isAdmin}
-                    />
+                      className="murmr-enter-comment"
+                      style={{ '--enter-delay': enterDelay(i, COMMENTS_DELAY_MS) } as React.CSSProperties}
+                    >
+                      <CommentItem
+                        comment={comment}
+                        author={userMap.get(comment.authorId)}
+                        currentUser={user}
+                        isAdmin={isAdmin}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
 
               {/* Add comment */}
-              <CommentInput postId={post.id} currentUser={user} />
+              {/* Part of the page cascade, not the comments reveal: it renders before comments load. */}
+              <div className="murmr-enter" style={{ '--enter-delay': enterDelay(12) } as React.CSSProperties}>
+                <CommentInput postId={post.id} currentUser={user} />
+              </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Edit modal */}

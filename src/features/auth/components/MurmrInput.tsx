@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 gsap.registerPlugin(useGSAP);
 
-export interface MurmrInputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+export type MurmrInputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 export const MurmrInput = React.forwardRef<HTMLInputElement, MurmrInputProps>(
   function MurmrInput({ className, type, ...props }, ref) {

@@ -5,6 +5,16 @@ import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from './ProtectedRoute';
 import GuestRoute from './GuestRoute';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import {
+  loadDashboardPage,
+  loadBoardPage,
+  loadPostDetailPage,
+  loadRoadmapPage,
+  loadChangelogPage,
+  loadActivityPage,
+  loadProfilePage,
+  loadSettingsPage,
+} from './appPages';
 
 // Landing page lazy — rich animations, own chunk
 const LandingPage = lazy(() => import('@/pages/LandingPage'));
@@ -16,15 +26,15 @@ import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/ResetPasswordPage';
 import ResetSuccessPage from '@/pages/ResetSuccessPage';
 
-// App pages lazy — only loaded after login
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const BoardPage = lazy(() => import('@/pages/BoardPage'));
-const PostDetailPage = lazy(() => import('@/pages/PostDetailPage'));
-const RoadmapPage = lazy(() => import('@/pages/RoadmapPage'));
-const ChangelogPage = lazy(() => import('@/pages/ChangelogPage'));
-const ActivityPage = lazy(() => import('@/pages/ActivityPage'));
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
-const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+// App pages lazy — only loaded after login (AppLayout preloads the rest)
+const DashboardPage = lazy(loadDashboardPage);
+const BoardPage = lazy(loadBoardPage);
+const PostDetailPage = lazy(loadPostDetailPage);
+const RoadmapPage = lazy(loadRoadmapPage);
+const ChangelogPage = lazy(loadChangelogPage);
+const ActivityPage = lazy(loadActivityPage);
+const ProfilePage = lazy(loadProfilePage);
+const SettingsPage = lazy(loadSettingsPage);
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 function PageFallback() {

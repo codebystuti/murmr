@@ -41,7 +41,8 @@ export function UpvoteButton({ post, big = false }: UpvoteButtonProps) {
     <button
       type="button"
       onClick={handleClick}
-      disabled={isPending}
+      // Not `disabled`: that would drop keyboard focus to <body> mid-vote. Clicks are ignored while pending.
+      aria-disabled={isPending || undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       aria-label={`${hasVoted ? 'Remove upvote' : 'Upvote'} — ${post.upvotes} upvotes`}

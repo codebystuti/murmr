@@ -20,12 +20,18 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
+// Message thrown by authApi.login when no user matches the email.
+const UNKNOWN_EMAIL = 'No account found with that email.';
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<FormData>({ resolver: zodResolver(schema) });
+  const form = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: '', password: '' },
+  });
 
   async function onSubmit(data: FormData) {
     setLoading(true);
@@ -35,7 +41,13 @@ export default function LoginPage() {
       toast.success(`Welcome back, ${user.name.split(' ')[0]}!`);
       navigate('/app');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Login failed');
+      const message = err instanceof Error ? err.message : 'Login failed';
+      if (message === UNKNOWN_EMAIL) {
+        // Field-level problem: show it under the email field, not as a toast.
+        form.setError('email', { type: 'server', message }, { shouldFocus: true });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -74,7 +86,7 @@ export default function LoginPage() {
         </motion.p>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'contents' }}>
+          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'contents' }} noValidate>
             {/* Email */}
             <motion.div variants={itemVariants}>
               <FormField
