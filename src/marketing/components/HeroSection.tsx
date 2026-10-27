@@ -167,7 +167,7 @@ export default function HeroSection() {
           }}
         >
           A focused public inbox for product feedback.
-          Collect, prioritize, and ship — all in one place.
+          Collect, prioritize, and ship - all in one place.
         </motion.p>
 
         {/* CTAs */}
