@@ -155,7 +155,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           m
         </span>
         <span style={{ fontWeight: 600, letterSpacing: '-0.01em', fontSize: 15, color: 'var(--tx)' }}>
-          Northwind
+          Murmr
         </span>
       </div>
 
