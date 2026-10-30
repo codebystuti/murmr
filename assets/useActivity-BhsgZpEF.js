@@ -1,1 +1,0 @@
-import{a as e}from"./query-DiAShFAY.js";import{j as r}from"./index-DdPQSd2r.js";function o(t=60){return e({queryKey:["activity",t],queryFn:()=>r.list(t),staleTime:0,refetchOnWindowFocus:!0})}export{o as u};

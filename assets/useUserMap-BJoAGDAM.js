@@ -1,1 +1,0 @@
-import{r as u}from"./react-vendor-DfWV-_0e.js";import{a as r}from"./query-DiAShFAY.js";import{k as o}from"./index-DdPQSd2r.js";const a={queryKey:["users"],queryFn:o.list,staleTime:5*60*1e3};function m(){const{data:s=[]}=r(a);return u.useMemo(()=>new Map(s.map(e=>[e.id,e])),[s])}function p(){return r(a).isLoading}export{p as a,m as u};
